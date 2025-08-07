@@ -493,20 +493,26 @@ app.get('/api/health', (req, res) => {
 // En Vercel, el directorio /tmp ya existe y es temporal
 console.log('📁 Usando directorio temporal /tmp para archivos');
 
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor backend iniciado en http://localhost:${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  
-  // Verificar configuración
-  if (API_CONFIG.replicate.apiKey) {
-    console.log('✅ Replicate API configurada');
-  } else {
-    console.log('⚠️  Replicate API no configurada');
-  }
-  
-  if (API_CONFIG.openai.apiKey) {
-    console.log('✅ OpenAI API configurada');
-  } else {
-    console.log('⚠️  OpenAI API no configurada');
-  }
-});
+// Solo iniciar el servidor si no estamos en Vercel
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor backend iniciado en http://localhost:${PORT}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+    
+    // Verificar configuración
+    if (API_CONFIG.replicate.apiKey) {
+      console.log('✅ Replicate API configurada');
+    } else {
+      console.log('⚠️  Replicate API no configurada');
+    }
+    
+    if (API_CONFIG.openai.apiKey) {
+      console.log('✅ OpenAI API configurada');
+    } else {
+      console.log('⚠️  OpenAI API no configurada');
+    }
+  });
+}
+
+// Exportar para Vercel
+export default app;

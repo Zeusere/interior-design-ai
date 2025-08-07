@@ -4,6 +4,13 @@ import type { DesignOptions } from '../types'
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 
                    (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin)
 
+// Función para construir URL del backend sin dobles barras
+function getBackendUrl(path: string): string {
+  const baseUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+  return `${baseUrl}${cleanPath}`
+}
+
 export interface BackendResponse {
   success: boolean
   imageUrl?: string
@@ -47,10 +54,11 @@ export class BackendService {
       formData.append('options', JSON.stringify(options))
 
       console.log('📤 Enviando solicitud al backend...')
-      console.log('📤 URL completa:', `${BACKEND_URL}/api/generate-design`)
+      const apiUrl = getBackendUrl('/api/generate-design')
+      console.log('📤 URL completa:', apiUrl)
       
       // Hacer llamada al backend
-      const response = await fetch(`${BACKEND_URL}/api/generate-design`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData
       })
@@ -92,7 +100,7 @@ export class BackendService {
 
   static async checkHealth(): Promise<{ apis: { replicate: boolean, openai: boolean } }> {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/health`)
+      const response = await fetch(getBackendUrl('/api/health'))
       
       if (!response.ok) {
         throw new Error('Backend no disponible')
