@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ImageUpload from '../components/ImageUpload.tsx'
 import EditingOptions from '../components/EditingOptions.tsx'
 import ResultsGallery from '../components/ResultsGallery.tsx'
+import SEO from '../components/SEO'
 import { motion } from 'framer-motion'
 import { aiService } from '../services/aiService.ts'
 
@@ -75,6 +76,12 @@ function DesignApp() {
 
   return (
     <main className="container mx-auto px-4 py-8">
+      <SEO 
+        title="Interior AI - Crear Diseños | Aplicación de IA"
+        description="Crea diseños profesionales de interiores con nuestra IA. Sube tu foto, personaliza opciones y obtén resultados instantáneos. Herramienta gratuita de diseño."
+        keywords="crear diseño interiores, aplicación IA, herramienta diseño, editor interiores, generador espacios"
+        canonical="https://interior-ai.com/app"
+      />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
