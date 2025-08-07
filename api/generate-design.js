@@ -5,8 +5,15 @@ import FormData from 'form-data';
 import fetch from 'node-fetch';
 import fs from 'fs';
 import sharp from 'sharp';
+import { createClient } from '@supabase/supabase-js';
 
 const app = express();
+
+// Configurar Supabase
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 
 // Middleware
 app.use(cors());
@@ -38,13 +45,111 @@ const API_CONFIG = {
 // Función para convertir imagen a base64
 function imageToBase64(imagePath) {
   try {
+    console.log('📁 Procesando imagen:', imagePath);
+    
+    // Verificar que el archivo existe
+    if (!fs.existsSync(imagePath)) {
+      throw new Error(`Archivo no encontrado: ${imagePath}`);
+    }
+    
+    // Leer el archivo
     const imageBuffer = fs.readFileSync(imagePath);
+    console.log('📊 Tamaño del archivo leído:', imageBuffer.length, 'bytes');
+    
+    if (imageBuffer.length === 0) {
+      throw new Error('El archivo está vacío');
+    }
+    
+    // Convertir a base64
     const base64 = imageBuffer.toString('base64');
     console.log('📷 Imagen convertida a base64, tamaño:', base64.length);
+    
     return base64;
   } catch (error) {
-    console.error('Error procesando imagen:', error);
-    throw new Error('Error al procesar la imagen');
+    console.error('❌ Error procesando imagen:', error);
+    throw new Error(`Error al procesar la imagen: ${error.message}`);
+  }
+}
+
+// Función para procesar y subir imagen a Supabase Storage
+async function uploadToSupabase(imagePath) {
+  try {
+    console.log('☁️ Procesando imagen con Sharp y subiendo a Supabase...');
+    console.log('📁 Ruta de imagen:', imagePath);
+    
+    // Verificar que el archivo existe
+    if (!fs.existsSync(imagePath)) {
+      throw new Error(`Archivo no encontrado: ${imagePath}`);
+    }
+    
+    // Leer el archivo y verificar su tamaño
+    const fileStats = fs.statSync(imagePath);
+    console.log('📊 Tamaño del archivo:', fileStats.size, 'bytes');
+    
+    if (fileStats.size === 0) {
+      throw new Error('El archivo está vacío');
+    }
+    
+    // Procesar imagen con Sharp para garantizar formato correcto
+    let processedImageBuffer;
+    try {
+      processedImageBuffer = await sharp(imagePath)
+        .jpeg({ quality: 85, progressive: true })
+        .resize(1024, 1024, { 
+          fit: 'inside', 
+          withoutEnlargement: true 
+        })
+        .toBuffer();
+    } catch (sharpError) {
+      console.error('❌ Error de Sharp:', sharpError.message);
+      // Intentar sin resize primero
+      try {
+        processedImageBuffer = await sharp(imagePath)
+          .jpeg({ quality: 85, progressive: true })
+          .toBuffer();
+      } catch (secondError) {
+        throw new Error(`Error procesando imagen: ${sharpError.message}. Segundo intento: ${secondError.message}`);
+      }
+    }
+    
+    console.log('📊 Tamaño después del procesamiento:', processedImageBuffer.length, 'bytes');
+    console.log('🔧 Imagen convertida a JPEG con Sharp');
+    
+    // Generar nombre único para el archivo
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2);
+    const fileName = `temp-images/${timestamp}-${randomId}.jpg`;
+    
+    console.log('📤 Subiendo archivo como:', fileName);
+    
+    // Subir a Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('interior-images')
+      .upload(fileName, processedImageBuffer, {
+        contentType: 'image/jpeg',
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (error) {
+      console.error('❌ Error de Supabase:', error);
+      throw new Error(`Error de Supabase: ${error.message}`);
+    }
+    
+    // Obtener URL pública
+    const { data: publicUrlData } = supabase.storage
+      .from('interior-images')
+      .getPublicUrl(fileName);
+    
+    const publicUrl = publicUrlData.publicUrl;
+    console.log('✅ Imagen procesada y subida exitosamente a Supabase:', publicUrl);
+    console.log('📋 Formato final: JPEG optimizado');
+    
+    return publicUrl;
+    
+  } catch (error) {
+    console.error('❌ Error procesando imagen con Sharp:', error);
+    throw new Error(`No se pudo procesar la imagen: ${error.message}`);
   }
 }
 
@@ -113,10 +218,21 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
       });
     }
 
-    // Procesar imagen
-    const imageBase64 = imageToBase64(req.file.path);
-    const prompt = createPrompt(options);
+    // Subir imagen a Supabase Storage para obtener URL pública
+    let publicImageUrl;
+    try {
+      publicImageUrl = await uploadToSupabase(req.file.path);
+    } catch (uploadError) {
+      console.error('❌ Error subiendo imagen a Supabase:', uploadError);
+      // Limpiar archivo temporal
+      fs.unlinkSync(req.file.path);
+      return res.status(500).json({ 
+        error: 'Error procesando la imagen',
+        details: uploadError.message
+      });
+    }
     
+    const prompt = createPrompt(options);
     console.log('📝 Prompt generado:', prompt);
 
     // Llamar a Replicate
@@ -129,7 +245,7 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
       body: JSON.stringify({
         version: API_CONFIG.replicate.version,
         input: {
-          image: `data:image/jpeg;base64,${imageBase64}`,
+          image: publicImageUrl,
           prompt: prompt,
           negative_prompt: 'low quality, blurry, distorted, ugly, bad anatomy',
           num_inference_steps: 20,
