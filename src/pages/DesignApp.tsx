@@ -5,22 +5,7 @@ import ResultsGallery from '../components/ResultsGallery.tsx'
 import SEO from '../components/SEO'
 import { motion } from 'framer-motion'
 import { aiService } from '../services/aiService.ts'
-
-export interface DesignOptions {
-  style: string
-  architecture: string
-  lighting: string
-  colorScheme: string
-  roomType: string
-}
-
-export interface ProcessedImage {
-  id: string
-  originalUrl: string
-  processedUrl: string
-  options: DesignOptions
-  timestamp: Date
-}
+import type { DesignOptions, ProcessedImage } from '../types'
 
 function DesignApp() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
@@ -52,7 +37,8 @@ function DesignApp() {
         originalUrl: uploadedImage,
         processedUrl: processedImageUrl,
         options: { ...designOptions },
-        timestamp: new Date()
+        timestamp: new Date(),
+        status: 'completed'
       }
       
       setProcessedImages(prev => [newProcessedImage, ...prev])
@@ -65,7 +51,8 @@ function DesignApp() {
         originalUrl: uploadedImage,
         processedUrl: uploadedImage,
         options: { ...designOptions },
-        timestamp: new Date()
+        timestamp: new Date(),
+        status: 'error'
       }
       
       setProcessedImages(prev => [newProcessedImage, ...prev])

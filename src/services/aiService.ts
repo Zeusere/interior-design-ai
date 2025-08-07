@@ -1,4 +1,4 @@
-import type { DesignOptions } from '../App'
+import type { DesignOptions } from '../types'
 import { AI_CONFIG, STYLE_PROMPTS, ROOM_CONFIG } from '../config/ai'
 import { BackendService } from './backendService'
 

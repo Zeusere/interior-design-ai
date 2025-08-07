@@ -1,6 +1,6 @@
 import { Download, Heart, Share2, Eye, Calendar } from 'lucide-react'
 import { motion } from 'framer-motion'
-import type { ProcessedImage } from '../App'
+import type { ProcessedImage } from '../types'
 
 interface ResultsGalleryProps {
   images: ProcessedImage[]
@@ -138,7 +138,7 @@ const ResultsGallery = ({ images }: ResultsGalleryProps) => {
                       key={key}
                       className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium"
                     >
-                      {value}
+                      {String(value)}
                     </span>
                   ))}
                 </div>

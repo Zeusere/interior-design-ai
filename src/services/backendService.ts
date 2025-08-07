@@ -1,4 +1,4 @@
-import type { DesignOptions } from '../App'
+import type { DesignOptions } from '../types'
 
 const BACKEND_URL = 'http://localhost:3001'
 
