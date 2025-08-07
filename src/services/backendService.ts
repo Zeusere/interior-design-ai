@@ -1,6 +1,8 @@
 import type { DesignOptions } from '../types'
 
-const BACKEND_URL = 'http://localhost:3001'
+// URL del backend - dinámica según el entorno
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 
+                   (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin)
 
 export interface BackendResponse {
   success: boolean

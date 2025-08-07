@@ -18,6 +18,7 @@ function DesignApp() {
   })
   const [processedImages, setProcessedImages] = useState<ProcessedImage[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const handleImageUpload = (imageUrl: string) => {
     setUploadedImage(imageUrl)
@@ -27,6 +28,7 @@ function DesignApp() {
     if (!uploadedImage) return
 
     setIsProcessing(true)
+    setErrorMessage(null)
     
     try {
       // Generar diseño con IA
@@ -44,6 +46,11 @@ function DesignApp() {
       setProcessedImages(prev => [newProcessedImage, ...prev])
     } catch (error) {
       console.error('Error al procesar la imagen:', error)
+      
+      // Mostrar mensaje de error más específico
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      setErrorMessage(errorMsg)
+      
       // En caso de error, mostrar mensaje al usuario
       // Por ahora, usamos la imagen original como fallback
       const newProcessedImage: ProcessedImage = {
@@ -52,7 +59,8 @@ function DesignApp() {
         processedUrl: uploadedImage,
         options: { ...designOptions },
         timestamp: new Date(),
-        status: 'error'
+        status: 'error',
+        error: errorMsg
       }
       
       setProcessedImages(prev => [newProcessedImage, ...prev])
@@ -115,6 +123,26 @@ function DesignApp() {
               isProcessing={isProcessing}
               onProcessImage={handleProcessImage}
             />
+
+            {/* Mensaje de error */}
+            {errorMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-50 border border-red-200 rounded-lg p-4"
+              >
+                <div className="flex items-center gap-2 text-red-800">
+                  <span className="text-lg">⚠️</span>
+                  <div>
+                    <h4 className="font-semibold">Error al procesar la imagen</h4>
+                    <p className="text-sm text-red-600">{errorMessage}</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      La aplicación está usando un modo de demostración. En producción, esto se conectaría a un servicio de IA real.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Resultados - SEGUNDO en móvil, justo debajo del upload en desktop */}
             {processedImages.length > 0 && (

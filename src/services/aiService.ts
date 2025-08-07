@@ -267,13 +267,112 @@ class AIService {
     }
   }
 
-  private async simulateGeneration(imageData: string, _options: DesignOptions): Promise<string> {
+  private async simulateGeneration(imageData: string, options: DesignOptions): Promise<string> {
     // Simular tiempo de procesamiento
     await new Promise(resolve => setTimeout(resolve, 2000))
     
-    // En un entorno real, aquí podríamos aplicar filtros CSS o usar una biblioteca de procesamiento de imágenes
-    // Por ahora, devolvemos la imagen original con un efecto visual
-    return imageData
+    // En producción, cuando no hay backend disponible, aplicamos un efecto visual básico
+    // usando Canvas API para simular un cambio de estilo
+    try {
+      return await this.applyVisualEffect(imageData, options)
+    } catch (error) {
+      console.warn('No se pudo aplicar efecto visual, devolviendo imagen original:', error)
+      return imageData
+    }
+  }
+
+  private async applyVisualEffect(imageData: string, options: DesignOptions): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        
+        if (!ctx) {
+          reject(new Error('No se pudo obtener contexto de canvas'))
+          return
+        }
+
+        // Configurar canvas
+        canvas.width = img.width
+        canvas.height = img.height
+        
+        // Dibujar imagen original
+        ctx.drawImage(img, 0, 0)
+        
+        // Aplicar efectos según las opciones
+        this.applyStyleEffects(ctx, canvas.width, canvas.height, options)
+        
+        // Convertir a data URL
+        try {
+          const processedImageData = canvas.toDataURL('image/jpeg', 0.9)
+          resolve(processedImageData)
+        } catch (error) {
+          reject(error)
+        }
+      }
+      
+      img.onerror = () => reject(new Error('No se pudo cargar la imagen'))
+      img.src = imageData
+    })
+  }
+
+  private applyStyleEffects(ctx: CanvasRenderingContext2D, width: number, height: number, options: DesignOptions) {
+    // Aplicar filtros según el estilo seleccionado
+    switch (options.style) {
+      case 'modern':
+        // Aumentar contraste y saturación
+        ctx.filter = 'contrast(1.2) saturate(1.1) brightness(1.05)'
+        break
+      case 'classic':
+        // Efecto vintage suave
+        ctx.filter = 'sepia(0.3) contrast(1.1) brightness(0.95)'
+        break
+      case 'industrial':
+        // Efecto más oscuro y contrastado
+        ctx.filter = 'contrast(1.3) brightness(0.9) saturate(0.8)'
+        break
+      case 'bohemian':
+        // Colores más vibrantes
+        ctx.filter = 'saturate(1.4) brightness(1.1) contrast(1.1)'
+        break
+      case 'scandinavian':
+        // Efecto claro y limpio
+        ctx.filter = 'brightness(1.15) contrast(1.05) saturate(0.9)'
+        break
+      case 'luxury':
+        // Efecto premium con más contraste
+        ctx.filter = 'contrast(1.25) brightness(1.05) saturate(1.2)'
+        break
+      default:
+        // Efecto neutral
+        ctx.filter = 'contrast(1.1) brightness(1.02)'
+    }
+
+    // Aplicar el filtro redibujando la imagen
+    const imageData = ctx.getImageData(0, 0, width, height)
+    ctx.putImageData(imageData, 0, 0)
+    
+    // Aplicar overlay de color según el esquema de colores
+    this.applyColorOverlay(ctx, width, height, options.colorScheme)
+  }
+
+  private applyColorOverlay(ctx: CanvasRenderingContext2D, width: number, height: number, colorScheme: string) {
+    const overlayColors: Record<string, { r: number, g: number, b: number, a: number }> = {
+      neutral: { r: 245, g: 245, b: 245, a: 0.1 },
+      monochrome: { r: 0, g: 0, b: 0, a: 0.05 },
+      earth: { r: 139, g: 69, b: 19, a: 0.15 },
+      vibrant: { r: 255, g: 20, b: 147, a: 0.1 },
+      pastel: { r: 255, g: 182, b: 193, a: 0.2 },
+      jewel: { r: 75, g: 0, b: 130, a: 0.15 }
+    }
+
+    const color = overlayColors[colorScheme] || overlayColors.neutral
+    
+    ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`
+    ctx.fillRect(0, 0, width, height)
   }
 }
 
