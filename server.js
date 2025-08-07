@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Cargar variables de entorno
-dotenv.config({ path: '.env.local' });
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -30,11 +30,8 @@ const supabase = createClient(
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// Servir archivos temporales
-app.use('/temp-images', express.static('uploads'));
-
-// Configurar multer para archivos
-const upload = multer({ dest: 'uploads/' });
+// Configurar multer para archivos temporales (compatible con Vercel)
+const upload = multer({ dest: '/tmp/' });
 
 // Configuración de APIs
 const API_CONFIG = {
@@ -227,11 +224,11 @@ app.get('/api/test-image', (req, res) => {
     const fileList = files.map(file => ({
       filename: file,
       url: `${baseUrl}/temp-images/${file}`,
-      path: `uploads/${file}`
+      path: `/tmp/${file}`
     }));
     
     res.json({
-      message: 'Archivos disponibles en uploads/',
+      message: 'Archivos temporales disponibles',
       baseUrl: baseUrl,
       files: fileList
     });
@@ -493,13 +490,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Crear directorio de uploads si no existe
-if (!fs.existsSync('uploads')) {
-  fs.mkdirSync('uploads');
-  console.log('📁 Directorio uploads/ creado');
-} else {
-  console.log('📁 Directorio uploads/ ya existe');
-}
+// En Vercel, el directorio /tmp ya existe y es temporal
+console.log('📁 Usando directorio temporal /tmp para archivos');
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor backend iniciado en http://localhost:${PORT}`);
