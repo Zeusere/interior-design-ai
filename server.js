@@ -79,15 +79,42 @@ function createTempImageUrl(imagePath, req) {
 async function uploadToSupabase(imagePath) {
   try {
     console.log('☁️ Procesando imagen con Sharp y subiendo a Supabase...');
+    console.log('📁 Ruta de imagen:', imagePath);
+    
+    // Verificar que el archivo existe
+    if (!fs.existsSync(imagePath)) {
+      throw new Error(`Archivo no encontrado: ${imagePath}`);
+    }
+    
+    // Leer el archivo y verificar su tamaño
+    const fileStats = fs.statSync(imagePath);
+    console.log('📊 Tamaño del archivo:', fileStats.size, 'bytes');
+    
+    if (fileStats.size === 0) {
+      throw new Error('El archivo está vacío');
+    }
     
     // Procesar imagen con Sharp para garantizar formato correcto
-    const processedImageBuffer = await sharp(imagePath)
-      .jpeg({ quality: 85, progressive: true })
-      .resize(1024, 1024, { 
-        fit: 'inside', 
-        withoutEnlargement: true 
-      })
-      .toBuffer();
+    let processedImageBuffer;
+    try {
+      processedImageBuffer = await sharp(imagePath)
+        .jpeg({ quality: 85, progressive: true })
+        .resize(1024, 1024, { 
+          fit: 'inside', 
+          withoutEnlargement: true 
+        })
+        .toBuffer();
+    } catch (sharpError) {
+      console.error('❌ Error de Sharp:', sharpError.message);
+      // Intentar sin resize primero
+      try {
+        processedImageBuffer = await sharp(imagePath)
+          .jpeg({ quality: 85, progressive: true })
+          .toBuffer();
+      } catch (secondError) {
+        throw new Error(`Error procesando imagen: ${sharpError.message}. Segundo intento: ${secondError.message}`);
+      }
+    }
     
     console.log('📊 Tamaño después del procesamiento:', processedImageBuffer.length, 'bytes');
     console.log('🔧 Imagen convertida a JPEG con Sharp');
@@ -319,7 +346,18 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
     console.log('📝 Prompt generado:', prompt);
 
     // Subir imagen a Supabase Storage para obtener URL pública
-    const publicImageUrl = await uploadToSupabase(imageFile.path);
+    let publicImageUrl;
+    try {
+      publicImageUrl = await uploadToSupabase(imageFile.path);
+    } catch (uploadError) {
+      console.error('❌ Error subiendo imagen a Supabase:', uploadError);
+      // Limpiar archivo temporal
+      fs.unlinkSync(imageFile.path);
+      return res.status(500).json({ 
+        error: 'Error procesando la imagen',
+        details: uploadError.message
+      });
+    }
     
     console.log('🚀 Enviando solicitud a Replicate...');
     console.log('📸 Usando imagen desde URL pública:', publicImageUrl);
