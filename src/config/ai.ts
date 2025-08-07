@@ -10,7 +10,7 @@ export const AI_CONFIG = {
     defaultParams: {
       num_inference_steps: 30,
       guidance_scale: 8.0,
-      prompt_strength: 0.6,
+      prompt_strength: 0.85,
       negative_prompt: "blurry, low quality, distorted, unrealistic, bad architecture, poor lighting, oversaturated, cartoonish, window misplacement, door misaligned"
     },
     pricing: 0.0055, // USD por imagen
