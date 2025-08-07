@@ -153,15 +153,26 @@ async function uploadToSupabase(imagePath) {
   }
 }
 
-// Función para crear prompt
+// Función para crear prompt optimizado
 function createPrompt(options) {
+  // Mapeo de estilos con prompts específicos para preservar estructura
   const styleMap = {
-    modern: 'modern minimalist interior design with clean lines and contemporary furniture',
-    classic: 'elegant classic interior design with traditional furniture and sophisticated decor',
-    industrial: 'industrial interior design with exposed brick, metal elements and urban aesthetic',
-    bohemian: 'bohemian interior design with eclectic mix of colors, textures and cultural elements',
-    scandinavian: 'scandinavian interior design with light woods, neutral colors and functional furniture',
-    luxury: 'luxury interior design with premium materials, sophisticated lighting and high-end finishes'
+    modern: 'modern minimalist interior design with clean lines, contemporary furniture, and sleek finishes',
+    classic: 'elegant classic interior design with traditional furniture, sophisticated decor, and timeless elegance',
+    industrial: 'industrial interior design with exposed brick, metal elements, raw materials, and urban aesthetic',
+    bohemian: 'bohemian interior design with eclectic mix of colors, textures, cultural elements, and artistic flair',
+    scandinavian: 'scandinavian interior design with light woods, neutral colors, functional furniture, and hygge atmosphere',
+    luxury: 'luxury interior design with premium materials, sophisticated lighting, high-end finishes, and opulent details'
+  };
+
+  // Mapeo de habitaciones con muebles específicos
+  const roomFurnitureMap = {
+    'living-room': 'comfortable sofa, coffee table, entertainment center, accent chairs, side tables, area rug, decorative lighting',
+    'bedroom': 'queen or king bed with headboard, bedside tables, wardrobe or closet, dresser, comfortable bedding, bedside lamps',
+    'kitchen': 'modern cabinets, granite or marble countertops, stainless steel appliances, kitchen island, bar stools, pendant lighting',
+    'dining-room': 'dining table with chairs, buffet or sideboard, chandelier or pendant light, area rug, decorative wall art',
+    'bathroom': 'vanity with sink, shower or bathtub, toilet, towel racks, mirrors, tiles, modern fixtures',
+    'office': 'desk with chair, bookshelves, filing cabinet, task lighting, comfortable seating area, productivity-focused design'
   };
 
   const roomMap = {
@@ -174,28 +185,30 @@ function createPrompt(options) {
   };
 
   const lightingMap = {
-    natural: 'natural lighting',
-    warm: 'warm lighting',
-    cool: 'cool lighting',
-    dramatic: 'dramatic lighting',
-    ambient: 'ambient lighting'
+    natural: 'abundant natural lighting with large windows',
+    warm: 'warm ambient lighting with cozy atmosphere',
+    cool: 'cool modern lighting with contemporary fixtures',
+    dramatic: 'dramatic lighting with statement fixtures',
+    ambient: 'soft ambient lighting with layered illumination'
   };
 
   const colorMap = {
-    neutral: 'neutral color palette',
-    monochrome: 'monochromatic color scheme',
-    earth: 'earth tone colors',
-    vibrant: 'vibrant colors',
-    pastel: 'pastel colors',
-    jewel: 'jewel tone colors'
+    neutral: 'neutral color palette with beige, gray, and white tones',
+    monochrome: 'monochromatic color scheme with varying shades',
+    earth: 'earth tone colors with warm browns and natural hues',
+    vibrant: 'vibrant colors with bold accents and energetic palette',
+    pastel: 'pastel colors with soft, soothing tones',
+    jewel: 'jewel tone colors with rich, deep hues'
   };
 
   const style = styleMap[options.style] || options.style;
   const room = roomMap[options.roomType] || options.roomType;
-  const lighting = lightingMap[options.lighting] || options.lighting;
-  const colors = colorMap[options.colorScheme] || options.colorScheme;
+  const furniture = roomFurnitureMap[options.roomType] || '';
+  const lighting = lightingMap[options.lighting] || '';
+  const colors = colorMap[options.colorScheme] || '';
 
-  return `Redesign this ${room} into a stunning ${style} featuring ${lighting} and ${colors}. Professional interior design photography, photorealistic, 4K resolution, high-end materials, perfect composition, award-winning interior design, architectural digest style, luxury finishes, impeccable attention to detail.`;
+  // Prompt optimizado para preservar estructura arquitectónica
+  return `Transform this ${room} into a beautiful ${style} while maintaining the original architectural structure, walls, windows, and room layout. Add ${furniture} with ${lighting} and ${colors}. Professional interior design photography, photorealistic quality, perfect furniture placement, no floating objects, no furniture against walls, proper scale and proportions, architectural integrity preserved, high-end materials, impeccable attention to detail, award-winning interior design.`;
 }
 
 // Endpoint principal
@@ -242,28 +255,57 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
         'Authorization': `Token ${API_CONFIG.replicate.apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        version: API_CONFIG.replicate.version,
-        input: {
-          image: publicImageUrl,
-          prompt: prompt,
-          negative_prompt: 'low quality, blurry, distorted, ugly, bad anatomy',
-          num_inference_steps: 20,
-          guidance_scale: 7.5,
-          prompt_strength: 0.8,
-          seed: Math.floor(Math.random() * 1000000)
-        }
-      })
+              body: JSON.stringify({
+          version: API_CONFIG.replicate.version,
+          input: {
+            image: publicImageUrl,
+            prompt: prompt,
+            negative_prompt: 'low quality, blurry, distorted, ugly, bad anatomy, floating furniture, furniture against walls, cut off objects, unrealistic proportions, poor lighting, oversaturated colors, cartoonish, architectural errors, window misplacement, door misaligned, furniture floating in air, objects without shadows, unrealistic shadows, poor composition, cluttered space, messy room, broken furniture, incomplete furniture, furniture merging with walls, unrealistic materials, poor texture quality, artificial looking, fake appearance, amateur photography, bad camera angle, poor framing',
+            num_inference_steps: 30,
+            guidance_scale: 8.5,
+            prompt_strength: 0.85,
+            seed: Math.floor(Math.random() * 1000000)
+          }
+        })
     });
 
     if (!replicateResponse.ok) {
-      const errorText = await replicateResponse.text();
-      console.error('❌ Error de Replicate:', errorText);
-      fs.unlinkSync(req.file.path);
-      return res.status(500).json({ 
-        error: 'Error al comunicarse con Replicate',
-        details: errorText
+      console.log('⚠️ Primer modelo falló, intentando con backup...');
+      
+      // Prompt simplificado para el modelo backup
+      const backupPrompt = `Redesign this room with ${options.style} style, ${options.lighting} lighting, and ${options.colorScheme} colors. Maintain architectural structure, add appropriate furniture for ${options.roomType}. Professional interior design, photorealistic quality.`;
+      
+      const backupResponse = await fetch(`${API_CONFIG.replicateBackup.baseUrl}/predictions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${API_CONFIG.replicateBackup.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          version: API_CONFIG.replicateBackup.version,
+          input: {
+            image: publicImageUrl,
+            prompt: backupPrompt,
+            negative_prompt: "blurry, low quality, distorted, unrealistic, bad architecture, poor lighting, oversaturated, cartoonish, floating objects, furniture against walls",
+            num_inference_steps: 30,
+            guidance_scale: 8.0,
+            prompt_strength: 0.85,
+            seed: Math.floor(Math.random() * 1000000)
+          }
+        })
       });
+      
+      if (!backupResponse.ok) {
+        const errorText = await backupResponse.text();
+        console.error('❌ Error de Replicate (backup):', errorText);
+        fs.unlinkSync(req.file.path);
+        return res.status(500).json({ 
+          error: 'Error al comunicarse con Replicate',
+          details: errorText
+        });
+      }
+      
+      replicateResponse = backupResponse;
     }
 
     const prediction = await replicateResponse.json();
