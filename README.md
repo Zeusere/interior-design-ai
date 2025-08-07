@@ -1,69 +1,113 @@
-# React + TypeScript + Vite
+🏠 Interior AI - Diseño de Interiores con IA
+Una aplicación moderna para transformar espacios interiores usando inteligencia artificial.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+✨ Características
+🎨 Diseño moderno y responsivo - Interfaz intuitiva con animaciones fluidas
+🖼️ Carga de imágenes - Sistema drag & drop para subir fotos
+🎭 Múltiples estilos - Moderno, clásico, industrial, bohemio, escandinavo, lujo
+🏛️ Estilos arquitectónicos - Contemporáneo, mediterráneo, rústico, mid-century, art déco
+💡 Control de iluminación - Natural, cálida, fría, dramática, ambiental
+🎨 Esquemas de color - Neutro, monocromático, tierras, vibrante, pastel, joya
+🏠 Tipos de habitación - Sala, dormitorio, cocina, comedor, baño, oficina
+🤖 Integración con múltiples APIs de IA - Replicate, OpenAI, Stability AI, RunwayML
+📱 Responsive - Funciona perfectamente en móviles y escritorio
+🚀 Instalación
+Clonar el repositorio
 
-Currently, two official plugins are available:
+git clone <repository-url>
+cd interior-design
+Instalar dependencias
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+npm install
+Configurar variables de entorno
 
-## Expanding the ESLint configuration
+cp env.example .env
+Edita el archivo .env y añade al menos una API key:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# Replicate (Recomendado)
+VITE_REPLICATE_API_KEY=r8_your_api_key_here
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# OpenAI (Alternativa)
+VITE_OPENAI_API_KEY=sk-your_api_key_here
+Iniciar la aplicación
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+npm run dev
+🔑 Configuración de APIs
+Replicate (Recomendado)
+Registro: https://replicate.com/
+Pros: Especializado en modelos de imagen, excelente calidad para diseño de interiores
+Pricing: Pay-per-use, muy competitivo
+OpenAI DALL-E 3
+Registro: https://platform.openai.com/
+Pros: Muy fácil de usar, resultados consistentes
+Nota: No soporta edición de imágenes directamente, genera nuevas imágenes
+Stability AI
+Registro: https://platform.stability.ai/
+Pros: Control detallado, modelos especializados
+RunwayML
+Registro: https://runwayml.com/
+Pros: Excelente para video y transformaciones complejas
+🛠️ Tecnologías Utilizadas
+React 18 - Framework principal
+TypeScript - Tipado estático
+Vite - Build tool rápido
+Tailwind CSS - Estilos utilitarios
+Framer Motion - Animaciones
+React Dropzone - Carga de archivos
+Lucide React - Iconos modernos
+Axios - Cliente HTTP
+📁 Estructura del Proyecto
+src/
+├── components/          # Componentes React
+│   ├── Header.tsx      # Barra de navegación
+│   ├── ImageUpload.tsx # Carga de imágenes
+│   ├── EditingOptions.tsx # Panel de opciones
+│   ├── ResultsGallery.tsx # Galería de resultados
+│   └── ErrorBoundary.tsx  # Manejo de errores
+├── services/           # Servicios de API
+│   └── aiService.ts   # Integración con APIs de IA
+├── App.tsx            # Componente principal
+├── main.tsx          # Punto de entrada
+└── index.css         # Estilos globales
+🎯 Próximas Funcionalidades
+ Sistema de autenticación de usuarios
+ Planes de suscripción y pagos
+ Historial de diseños por usuario
+ Compartir diseños en redes sociales
+ Exportar en diferentes formatos
+ Comparación antes/después
+ Generación de múltiples variantes
+ Integración con realidad aumentada
+ API REST para terceros
+ Aplicación móvil nativa
+🔧 Desarrollo
+Scripts disponibles
+npm run dev          # Servidor de desarrollo
+npm run build        # Build para producción
+npm run preview      # Preview del build
+npm run lint         # Linter
+npm run type-check   # Verificar tipos TypeScript
+Agregar un nuevo proveedor de IA
+Implementa la interfaz AIProvider en src/services/aiService.ts
+Añade la configuración en API_CONFIG
+Registra el proveedor en el constructor de AIService
+Añade las variables de entorno necesarias
+📄 Licencia
+MIT License - Ver archivo LICENSE para más detalles.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+🤝 Contribuir
+¡Las contribuciones son bienvenidas! Por favor:
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Fork el proyecto
+Crea una rama para tu feature (git checkout -b feature/AmazingFeature)
+Commit tus cambios (git commit -m 'Add some AmazingFeature')
+Push a la rama (git push origin feature/AmazingFeature)
+Abre un Pull Request
+📞 Soporte
+Si tienes problemas o preguntas:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Revisa la documentación
+Busca en los issues existentes
+Crea un nuevo issue con detalles del problema
+Incluye capturas de pantalla si es relevante
+Hecho con ❤️ para transformar espacios con IA
