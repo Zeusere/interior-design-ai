@@ -180,7 +180,7 @@ function DesignApp() {
           <EditingOptions 
             options={designOptions}
             onChange={setDesignOptions}
-            disabled={!uploadedImage || isProcessing}
+            disabled={isProcessing || (!isMultiMode && !uploadedImage)}
             multiMode={isMultiMode}
           />
         </motion.div>

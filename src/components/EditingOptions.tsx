@@ -120,7 +120,7 @@ const EditingOptions = ({ options, onChange, disabled, multiMode }: EditingOptio
                       ? 'border-purple-500 bg-purple-50 shadow-md'
                       : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
                     }
-                    ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    ${(disabled || (multiMode && group.key === 'roomType')) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                   `}
                 >
                   <div className="font-medium text-gray-800">{option.label}</div>
