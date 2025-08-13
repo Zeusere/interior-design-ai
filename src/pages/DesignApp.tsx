@@ -19,6 +19,7 @@ function DesignApp() {
   const [processedImages, setProcessedImages] = useState<ProcessedImage[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isMultiMode, setIsMultiMode] = useState(false)
 
   const handleImageUpload = (imageUrl: string) => {
     setUploadedImage(imageUrl)
@@ -180,6 +181,7 @@ function DesignApp() {
             options={designOptions}
             onChange={setDesignOptions}
             disabled={!uploadedImage || isProcessing}
+            multiMode={isMultiMode}
           />
         </motion.div>
 
@@ -199,6 +201,7 @@ function DesignApp() {
               onProcessImage={handleProcessImage}
               onMultipleImagesUpload={handleMultipleImagesUpload}
               onImageEnhance={handleImageEnhance}
+              onModeChange={setIsMultiMode}
             />
 
             {/* Mensaje de error */}

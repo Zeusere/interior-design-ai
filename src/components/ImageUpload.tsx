@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, Image as ImageIcon, Loader2, Wand2, Plus, X, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -19,6 +19,7 @@ interface ImageUploadProps {
   onMultipleImagesUpload?: (images: UploadedImageInfo[]) => void
   onImageEnhance?: (imageUrl: string) => void
   uploadedImages?: UploadedImageInfo[]
+  onModeChange?: (isMultiMode: boolean) => void
 }
 
 const ImageUpload = ({ 
@@ -27,11 +28,19 @@ const ImageUpload = ({
   isProcessing, 
   onProcessImage,
   onMultipleImagesUpload,
-  onImageEnhance
+  onImageEnhance,
+  onModeChange
 }: ImageUploadProps) => {
   const [dragActive, setDragActive] = useState(false)
   const [multiMode, setMultiMode] = useState(false)
   const [localImages, setLocalImages] = useState<UploadedImageInfo[]>([])
+
+  // Notificar cambio de modo
+  useEffect(() => {
+    if (onModeChange) {
+      onModeChange(multiMode)
+    }
+  }, [multiMode, onModeChange])
 
   const roomTypes = [
     { value: 'living-room', label: 'Sala de Estar' },

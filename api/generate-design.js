@@ -160,62 +160,133 @@ async function uploadToSupabase(imagePath) {
   }
 }
 
-// Función para crear prompt optimizado
+// Función para crear prompt optimizado - VERSIÓN PROFESIONAL MEJORADA
 function createPrompt(options) {
-  // Mapeo de estilos con prompts específicos para preservar estructura
+  // Mapeo de estilos con descripciones específicas y materiales
   const styleMap = {
-    modern: 'modern minimalist interior design with clean lines, contemporary furniture, and sleek finishes',
-    classic: 'elegant classic interior design with traditional furniture, sophisticated decor, and timeless elegance',
-    industrial: 'industrial interior design with exposed brick, metal elements, raw materials, and urban aesthetic',
-    bohemian: 'bohemian interior design with eclectic mix of colors, textures, cultural elements, and artistic flair',
-    scandinavian: 'scandinavian interior design with light woods, neutral colors, functional furniture, and hygge atmosphere',
-    luxury: 'luxury interior design with premium materials, sophisticated lighting, high-end finishes, and opulent details'
+    modern: {
+      description: 'ultra-modern contemporary',
+      cabinets: 'sleek handleless cabinets in matte white or charcoal',
+      furniture: 'minimalist furniture with clean geometric lines',
+      materials: 'polished concrete, brushed steel, glass',
+      details: 'hidden storage, integrated lighting, floating elements'
+    },
+    classic: {
+      description: 'timeless traditional',
+      cabinets: 'classic raised-panel cabinetry in rich wood tones',
+      furniture: 'elegant traditional furniture with refined details',
+      materials: 'natural wood, marble, brass accents',
+      details: 'crown molding, decorative hardware, sophisticated trim'
+    },
+    industrial: {
+      description: 'raw industrial loft-style',
+      cabinets: 'metal-framed cabinets with weathered wood or steel doors',
+      furniture: 'reclaimed wood and metal industrial furniture',
+      materials: 'exposed brick, raw steel, concrete, weathered wood',
+      details: 'visible pipes, metal brackets, Edison bulb fixtures'
+    },
+    bohemian: {
+      description: 'eclectic bohemian',
+      cabinets: 'painted cabinets in rich jewel tones with vintage hardware',
+      furniture: 'mix of vintage and artisanal furniture pieces',
+      materials: 'natural textures, woven elements, colorful tiles',
+      details: 'layered textiles, plants, artistic accessories'
+    },
+    scandinavian: {
+      description: 'Nordic minimalist',
+      cabinets: 'light wood cabinets with simple clean lines',
+      furniture: 'functional light wood furniture with cozy textiles',
+      materials: 'pale woods, white surfaces, natural fibers',
+      details: 'hygge elements, minimal decoration, functional design'
+    },
+    luxury: {
+      description: 'high-end luxury',
+      cabinets: 'premium custom cabinetry with gold or brass details',
+      furniture: 'designer furniture with luxurious fabrics',
+      materials: 'marble, gold accents, premium woods, crystal',
+      details: 'custom millwork, statement lighting, opulent finishes'
+    }
   };
 
-  // Mapeo de habitaciones con muebles específicos
-  const roomFurnitureMap = {
-    'living-room': 'comfortable sofa, coffee table, entertainment center, accent chairs, side tables, area rug, decorative lighting',
-    'bedroom': 'queen or king bed with headboard, bedside tables, wardrobe or closet, dresser, comfortable bedding, bedside lamps',
-    'kitchen': 'modern cabinets, granite or marble countertops, stainless steel appliances, kitchen island, bar stools, pendant lighting',
-    'dining-room': 'dining table with chairs, buffet or sideboard, chandelier or pendant light, area rug, decorative wall art',
-    'bathroom': 'vanity with sink, shower or bathtub, toilet, towel racks, mirrors, tiles, modern fixtures',
-    'office': 'desk with chair, bookshelves, filing cabinet, task lighting, comfortable seating area, productivity-focused design'
+  // Mapeo específico por tipo de habitación con elementos clave
+  const roomSpecifics = {
+    'living-room': {
+      focus: 'seating area and entertainment space',
+      replace: 'furniture with stylish sofa, coffee table, accent chairs, side tables',
+      flooring: 'premium hardwood or large format tiles',
+      walls: 'feature wall with textural elements or artwork'
+    },
+    'bedroom': {
+      focus: 'sleeping and relaxation area',
+      replace: 'furniture with elegant bed frame, nightstands, dresser, reading chair',
+      flooring: 'warm hardwood or luxury carpet',
+      walls: 'calming headboard wall with soft textures'
+    },
+    'kitchen': {
+      focus: 'cooking and dining preparation area',
+      replace: 'cabinets and countertops',
+      flooring: 'durable luxury vinyl, tile, or hardwood',
+      walls: 'backsplash with premium tiles or natural stone'
+    },
+    'dining-room': {
+      focus: 'formal dining and entertaining space',
+      replace: 'furniture with dining table, chairs, buffet, lighting fixture',
+      flooring: 'elegant hardwood or polished tile',
+      walls: 'statement wall with wainscoting or bold color'
+    },
+    'bathroom': {
+      focus: 'bathing and grooming area',
+      replace: 'vanity, fixtures, and tile work',
+      flooring: 'luxury tile or natural stone',
+      walls: 'premium tile work and modern fixtures'
+    },
+    'office': {
+      focus: 'workspace and productivity area',
+      replace: 'furniture with modern desk, ergonomic chair, storage solutions',
+      flooring: 'professional hardwood or commercial-grade flooring',
+      walls: 'built-in shelving and organized storage'
+    }
   };
 
-  const roomMap = {
-    'living-room': 'living room',
-    'bedroom': 'bedroom',
-    'kitchen': 'kitchen',
-    'dining-room': 'dining room',
-    'bathroom': 'bathroom',
-    'office': 'home office'
-  };
-
+  // Mapeo de iluminación mejorado
   const lightingMap = {
-    natural: 'bright natural daylight illumination with enhanced existing lighting sources, optimized brightness and clarity',
-    warm: 'warm ambient lighting with cozy atmosphere',
-    cool: 'cool modern lighting with contemporary fixtures',
-    dramatic: 'dramatic lighting with statement fixtures',
-    ambient: 'soft ambient lighting with layered illumination'
+    natural: 'maximize natural daylight from existing windows, bright airy atmosphere',
+    warm: 'warm 2700K-3000K lighting creating cozy inviting ambiance',
+    cool: 'crisp 4000K-5000K lighting for modern bright environment',
+    dramatic: 'accent lighting with strong shadows and highlights',
+    ambient: 'soft layered lighting with multiple warm sources'
   };
 
+  // Mapeo de esquemas de color mejorado
   const colorMap = {
-    neutral: 'neutral color palette with beige, gray, and white tones',
-    monochrome: 'monochromatic color scheme with varying shades',
-    earth: 'earth tone colors with warm browns and natural hues',
-    vibrant: 'vibrant colors with bold accents and energetic palette',
-    pastel: 'pastel colors with soft, soothing tones',
-    jewel: 'jewel tone colors with rich, deep hues'
+    neutral: 'sophisticated neutral palette with warm whites, soft grays, and natural beiges',
+    monochrome: 'elegant monochromatic scheme with varying shades of gray and white',
+    earth: 'warm earth tones with rich browns, terracotta, and natural ochres',
+    vibrant: 'bold vibrant colors with energetic accents and confident hues',
+    pastel: 'soft pastel palette with gentle pinks, blues, and sage greens',
+    jewel: 'rich jewel tones with deep emeralds, sapphires, and warm golds'
   };
 
-  const style = styleMap[options.style] || options.style;
-  const room = roomMap[options.roomType] || options.roomType;
-  const furniture = roomFurnitureMap[options.roomType] || '';
-  const lighting = lightingMap[options.lighting] || '';
-  const colors = colorMap[options.colorScheme] || '';
+  // Obtener configuraciones
+  const styleConfig = styleMap[options.style] || styleMap.modern;
+  const roomConfig = roomSpecifics[options.roomType] || roomSpecifics['living-room'];
+  const lighting = lightingMap[options.lighting] || lightingMap.natural;
+  const colors = colorMap[options.colorScheme] || colorMap.neutral;
 
-  // Prompt optimizado para preservar estructura arquitectónica
-  return `Transform this ${room} into a beautiful ${style} while maintaining the original architectural structure, walls, windows, and room layout. Add ${furniture} with ${lighting} and ${colors}. Professional interior design photography, photorealistic quality, perfect furniture placement, no floating objects, no furniture against walls, proper scale and proportions, architectural integrity preserved, high-end materials, impeccable attention to detail, award-winning interior design.`;
+  // Construir prompt profesional basado en el ejemplo proporcionado
+  const mainPrompt = [
+    `Photorealistic interior makeover of this ${options.roomType.replace('-', ' ')}.`,
+    `Preserve the exact walls, windows, doors, and architectural layout.`,
+    `${roomConfig.replace} with ${styleConfig.description} style.`,
+    `Apply ${colors} throughout the space.`,
+    `Use ${styleConfig.materials} for surfaces and accents.`,
+    `${roomConfig.flooring} for flooring.`,
+    `${lighting}.`,
+    `Include ${styleConfig.details}.`,
+    `European contemporary design principles, realistic textures, accurate reflections, professional photography quality.`
+  ].join(' ');
+
+  return mainPrompt;
 }
 
 // Endpoint principal
@@ -267,7 +338,7 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
           input: {
             image: publicImageUrl,
             prompt: prompt,
-            negative_prompt: 'low quality, blurry, distorted, ugly, bad anatomy, floating furniture, furniture against walls, cut off objects, unrealistic proportions, poor lighting, oversaturated colors, cartoonish, architectural errors, window misplacement, door misaligned, furniture floating in air, objects without shadows, unrealistic shadows, poor composition, cluttered space, messy room, broken furniture, incomplete furniture, furniture merging with walls, unrealistic materials, poor texture quality, artificial looking, fake appearance, amateur photography, bad camera angle, poor framing',
+            negative_prompt: 'warped cabinets, extra walls, incorrect reflections, motion blur, floating furniture, furniture against walls, unrealistic proportions, broken geometry, poor architectural perspective, misaligned windows, doors in wrong places, furniture floating in air, oversaturated colors, cartoonish appearance, amateur photography, blurry textures, incorrect shadows, objects without physics, cut off furniture, incomplete room elements, distorted materials, fake plastic appearance, poor lighting quality, cluttered messy space, low resolution, pixelated, artificial looking',
             num_inference_steps: 30,
             guidance_scale: 8.5,
             prompt_strength: 0.85,
@@ -293,7 +364,7 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
           input: {
             image: publicImageUrl,
             prompt: backupPrompt,
-            negative_prompt: "blurry, low quality, distorted, unrealistic, bad architecture, poor lighting, oversaturated, cartoonish, floating objects, furniture against walls",
+            negative_prompt: "warped cabinets, extra walls, incorrect reflections, motion blur, floating furniture, unrealistic proportions, broken geometry, poor architectural perspective, blurry, low quality, cartoonish, oversaturated colors",
             num_inference_steps: 30,
             guidance_scale: 8.0,
             prompt_strength: 0.85,

@@ -6,9 +6,10 @@ interface EditingOptionsProps {
   options: DesignOptions
   onChange: (options: DesignOptions) => void
   disabled?: boolean
+  multiMode?: boolean
 }
 
-const EditingOptions = ({ options, onChange, disabled }: EditingOptionsProps) => {
+const EditingOptions = ({ options, onChange, disabled, multiMode }: EditingOptionsProps) => {
   const handleOptionChange = (key: keyof DesignOptions, value: string) => {
     onChange({ ...options, [key]: value })
   }
@@ -95,17 +96,24 @@ const EditingOptions = ({ options, onChange, disabled }: EditingOptionsProps) =>
             transition={{ duration: 0.3, delay: groupIndex * 0.1 }}
             className="space-y-3"
           >
-            <h3 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
-              {group.icon}
-              {group.title}
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
+                {group.icon}
+                {group.title}
+              </h3>
+              {multiMode && group.key === 'roomType' && (
+                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+                  Se configura por imagen
+                </span>
+              )}
+            </div>
             
             <div className="grid grid-cols-1 gap-2">
               {group.options.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => handleOptionChange(group.key, option.value)}
-                  disabled={disabled}
+                  disabled={disabled || (multiMode && group.key === 'roomType')}
                   className={`
                     p-3 rounded-lg text-left transition-all duration-200 border-2
                     ${options[group.key] === option.value
