@@ -98,6 +98,51 @@ export class BackendService {
     }
   }
 
+  static async enhanceImage(imageData: string): Promise<string> {
+    try {
+      console.log('✨ Iniciando mejora de imagen con backend...')
+      
+      // Crear FormData para enviar la imagen
+      const formData = new FormData()
+      
+      // Convertir data URL a File
+      const imageFile = dataURLtoFile(imageData, 'image-to-enhance.jpg')
+      formData.append('image', imageFile)
+
+      const apiUrl = getBackendUrl('/api/enhance-image')
+      
+      // Hacer llamada al backend
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ Error del servidor:', errorText)
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`)
+      }
+
+      const result: BackendResponse = await response.json()
+      
+      if (!result.success || !result.imageUrl) {
+        throw new Error(result.error || 'No se pudo mejorar la imagen')
+      }
+
+      console.log('✅ Imagen mejorada exitosamente')
+      return result.imageUrl
+
+    } catch (error) {
+      console.error('❌ Error en mejora de imagen:', error)
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('❌ No se puede conectar al servidor backend para mejora de imagen')
+      }
+      
+      throw error
+    }
+  }
+
   static async checkHealth(): Promise<{ apis: { replicate: boolean, openai: boolean } }> {
     try {
       const response = await fetch(getBackendUrl('/api/health'))

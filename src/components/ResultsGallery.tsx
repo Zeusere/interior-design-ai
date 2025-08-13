@@ -1,4 +1,4 @@
-import { Download, Heart, Share2, Eye, Calendar } from 'lucide-react'
+import { Download, Heart, Share2, Eye, Calendar, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { ProcessedImage } from '../types'
 
@@ -160,11 +160,17 @@ const ResultsGallery = ({ images }: ResultsGalleryProps) => {
               </div>
             </div>
 
-            {/* Badge de calidad */}
-            <div className="absolute top-4 left-4">
+            {/* Badges de calidad */}
+            <div className="absolute top-4 left-4 flex flex-col gap-2">
               <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
                 IA Premium
               </span>
+              {image.isEnhanced && (
+                <span className="px-2 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Mejorada
+                </span>
+              )}
             </div>
           </motion.div>
         ))}

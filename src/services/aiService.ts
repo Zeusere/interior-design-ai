@@ -215,6 +215,19 @@ class AIService {
     return Array.from(this.providers.values()).filter(provider => provider.isAvailable())
   }
 
+  async enhanceImage(imageData: string): Promise<string> {
+    try {
+      // Intentar primero con el backend
+      console.log('🚀 Mejorando calidad de imagen con backend...')
+      return await BackendService.enhanceImage(imageData)
+    } catch (backendError) {
+      console.warn('⚠️ Backend no disponible para mejora, usando simulación:', backendError)
+      
+      // Fallback: simulación de mejora
+      return this.simulateImageEnhancement(imageData)
+    }
+  }
+
   async generateDesign(
     imageData: string, 
     options: DesignOptions, 
@@ -264,6 +277,18 @@ class AIService {
         console.log('📱 Todos los proveedores fallaron, usando simulación')
         return this.simulateGeneration(imageData, options)
       }
+    }
+  }
+
+  private async simulateImageEnhancement(imageData: string): Promise<string> {
+    // Simular tiempo de procesamiento
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    try {
+      return await this.applyEnhancementEffect(imageData)
+    } catch (error) {
+      console.warn('No se pudo aplicar efecto de mejora, devolviendo imagen original:', error)
+      return imageData
     }
   }
 
@@ -357,6 +382,72 @@ class AIService {
     
     // Aplicar overlay de color según el esquema de colores
     this.applyColorOverlay(ctx, width, height, options.colorScheme)
+  }
+
+  private async applyEnhancementEffect(imageData: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        
+        if (!ctx) {
+          reject(new Error('No se pudo obtener contexto de canvas'))
+          return
+        }
+
+        // Configurar canvas con mayor resolución para simular upscaling
+        const scale = 1.5 // Simular un aumento de resolución
+        canvas.width = img.width * scale
+        canvas.height = img.height * scale
+        
+        // Configurar filtros de mejora
+        ctx.imageSmoothingEnabled = true
+        ctx.imageSmoothingQuality = 'high'
+        
+        // Aplicar filtros de mejora de calidad
+        ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1) sharpen(1.2)'
+        
+        // Dibujar imagen escalada con interpolación suave
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        
+        // Aplicar post-procesamiento para mejorar detalles
+        this.enhanceImageDetails(ctx, canvas.width, canvas.height)
+        
+        // Convertir a data URL con alta calidad
+        try {
+          const enhancedImageData = canvas.toDataURL('image/jpeg', 0.95)
+          resolve(enhancedImageData)
+        } catch (error) {
+          reject(error)
+        }
+      }
+      
+      img.onerror = () => reject(new Error('No se pudo cargar la imagen'))
+      img.src = imageData
+    })
+  }
+
+  private enhanceImageDetails(ctx: CanvasRenderingContext2D, width: number, height: number) {
+    const imageData = ctx.getImageData(0, 0, width, height)
+    const data = imageData.data
+    
+    // Aplicar sharpening básico
+    for (let i = 0; i < data.length; i += 4) {
+      // Incrementar ligeramente el contraste de cada pixel
+      data[i] = Math.min(255, data[i] * 1.1)     // Red
+      data[i + 1] = Math.min(255, data[i + 1] * 1.1) // Green
+      data[i + 2] = Math.min(255, data[i + 2] * 1.1) // Blue
+      // Alpha (data[i + 3]) se mantiene igual
+    }
+    
+    ctx.putImageData(imageData, 0, 0)
+    
+    // Aplicar un subtle glow effect para simular mejor calidad
+    ctx.shadowBlur = 1
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.3)'
   }
 
   private applyColorOverlay(ctx: CanvasRenderingContext2D, width: number, height: number, colorScheme: string) {

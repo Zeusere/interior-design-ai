@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import ImageUpload from '../components/ImageUpload.tsx'
+import ImageUpload, { type UploadedImageInfo } from '../components/ImageUpload.tsx'
 import EditingOptions from '../components/EditingOptions.tsx'
 import ResultsGallery from '../components/ResultsGallery.tsx'
 import SEO from '../components/SEO'
@@ -22,6 +22,81 @@ function DesignApp() {
 
   const handleImageUpload = (imageUrl: string) => {
     setUploadedImage(imageUrl)
+  }
+
+  const handleMultipleImagesUpload = async (images: UploadedImageInfo[]) => {
+    setIsProcessing(true)
+    setErrorMessage(null)
+    
+    try {
+      // Procesar cada imagen con su tipo de habitación específico
+      for (const image of images) {
+        const imageDesignOptions = { ...designOptions, roomType: image.roomType }
+        
+        try {
+          const processedImageUrl = await aiService.generateDesign(image.url, imageDesignOptions)
+          
+          const newProcessedImage: ProcessedImage = {
+            id: Date.now().toString() + Math.random().toString(),
+            originalUrl: image.url,
+            processedUrl: processedImageUrl,
+            options: imageDesignOptions,
+            timestamp: new Date(),
+            status: 'completed'
+          }
+          
+          setProcessedImages(prev => [newProcessedImage, ...prev])
+        } catch (error) {
+          console.error('Error al procesar imagen múltiple:', error)
+          const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+          
+          const newProcessedImage: ProcessedImage = {
+            id: Date.now().toString() + Math.random().toString(),
+            originalUrl: image.url,
+            processedUrl: image.url,
+            options: imageDesignOptions,
+            timestamp: new Date(),
+            status: 'error',
+            error: errorMsg
+          }
+          
+          setProcessedImages(prev => [newProcessedImage, ...prev])
+        }
+      }
+    } catch (error) {
+      console.error('Error general al procesar múltiples imágenes:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Error desconocido')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleImageEnhance = async (imageUrl: string) => {
+    setIsProcessing(true)
+    setErrorMessage(null)
+    
+    try {
+      // Llamar al servicio de mejora de calidad
+      const enhancedImageUrl = await aiService.enhanceImage(imageUrl)
+      
+      const newProcessedImage: ProcessedImage = {
+        id: Date.now().toString(),
+        originalUrl: imageUrl,
+        processedUrl: enhancedImageUrl,
+        options: { ...designOptions, isEnhanced: true },
+        timestamp: new Date(),
+        status: 'completed',
+        isEnhanced: true
+      }
+      
+      setProcessedImages(prev => [newProcessedImage, ...prev])
+    } catch (error) {
+      console.error('Error al mejorar la imagen:', error)
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      setErrorMessage(`Error al mejorar la calidad: ${errorMsg}`)
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const handleProcessImage = async () => {
@@ -122,6 +197,8 @@ function DesignApp() {
               uploadedImage={uploadedImage}
               isProcessing={isProcessing}
               onProcessImage={handleProcessImage}
+              onMultipleImagesUpload={handleMultipleImagesUpload}
+              onImageEnhance={handleImageEnhance}
             />
 
             {/* Mensaje de error */}

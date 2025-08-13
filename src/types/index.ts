@@ -4,6 +4,7 @@ export interface DesignOptions {
   lighting: string
   colorScheme: string
   roomType: string
+  isEnhanced?: boolean
 }
 
 export interface ProcessedImage {
@@ -14,4 +15,5 @@ export interface ProcessedImage {
   timestamp: Date
   status: 'processing' | 'completed' | 'error'
   error?: string
+  isEnhanced?: boolean
 }
