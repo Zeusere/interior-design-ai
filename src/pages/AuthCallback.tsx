@@ -13,7 +13,13 @@ const AuthCallback: React.FC = () => {
         console.log('🔍 Hash fragment:', window.location.hash)
         
         // Intentar procesar los tokens del hash primero
-        const hashParams = new URLSearchParams(window.location.hash.split('#')[1] || '')
+        const fullHash = window.location.hash
+        // Buscar la parte que contiene los tokens (después del segundo #)
+        const tokenPart = fullHash.includes('#access_token') ? 
+          fullHash.split('#access_token')[1] : 
+          (fullHash.includes('&access_token') ? fullHash.split('&access_token')[1] : '')
+        
+        const hashParams = new URLSearchParams('access_token' + tokenPart)
         const accessToken = hashParams.get('access_token')
         const refreshToken = hashParams.get('refresh_token')
         
