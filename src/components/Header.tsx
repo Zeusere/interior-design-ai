@@ -46,21 +46,12 @@ const Header = () => {
                 <a href="#examples" className="text-gray-600 hover:text-purple-600 transition-colors">
                   Ejemplos
                 </a>
-                {user ? (
-                  <Link 
-                    to="/app" 
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-full hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-                  >
-                    Ir a la App
-                  </Link>
-                ) : (
-                  <button 
-                    onClick={() => setShowAuthModal(true)}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-full hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-                  >
-                    Empezar Gratis
-                  </button>
-                )}
+                <Link 
+                  to="/app" 
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-full hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                >
+                  {user ? 'Ir a la App' : 'Empezar Gratis'}
+                </Link>
               </>
             ) : (
               <>
@@ -142,12 +133,12 @@ const Header = () => {
                     )}
                   </div>
                 ) : (
-                  <button 
-                    onClick={() => setShowAuthModal(true)}
+                  <Link 
+                    to="/app"
                     className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-full hover:shadow-lg transition-all duration-300 transform hover:scale-105"
                   >
                     Iniciar Sesión
-                  </button>
+                  </Link>
                 )}
               </>
             )}

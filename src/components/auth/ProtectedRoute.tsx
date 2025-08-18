@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import AuthModal from './AuthModal'
 
@@ -14,7 +14,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireSubscription = false 
 }) => {
   const { user, loading, subscriptionInfo } = useAuth()
-  const [showAuthModal, setShowAuthModal] = useState(false)
 
   // Mostrar loading mientras se verifica la autenticación
   if (loading) {
@@ -25,42 +24,25 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     )
   }
 
-  // Si no hay usuario, mostrar fallback o modal de auth
+  // Si no hay usuario, mostrar modal de login directamente
   if (!user) {
     if (fallback) {
       return <>{fallback}</>
     }
 
+    // Mostrar directamente el modal de login sin pantalla intermedia
     return (
-      <>
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="mb-6">
-              <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m2-5a2 2 0 100-4 2 2 0 000 4z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Acceso Requerido</h2>
-              <p className="text-gray-600">
-                Necesitas iniciar sesión para acceder a esta funcionalidad
-              </p>
-            </div>
-            
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
-            >
-              Iniciar Sesión
-            </button>
-          </div>
-        </div>
-
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-blue-50">
+        {/* Modal de login siempre abierto */}
         <AuthModal 
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
+          isOpen={true}
+          onClose={() => {
+            // Redirigir a la página principal si cierra el modal
+            window.location.href = '/'
+          }}
+          defaultMode="signin"
         />
-      </>
+      </div>
     )
   }
 
