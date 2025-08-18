@@ -8,23 +8,39 @@ const AuthCallback: React.FC = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession()
+        console.log('🔍 AuthCallback: Iniciando procesamiento...')
+        console.log('🔍 URL actual:', window.location.href)
+        console.log('🔍 Hash:', window.location.hash)
+        console.log('🔍 Search params:', window.location.search)
         
-        if (error) {
-          console.error('Error in auth callback:', error)
+        // Primero, verificar si hay fragmentos en la URL que Supabase necesita procesar
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+        console.log('🔍 Sesión actual:', sessionData)
+        console.log('🔍 Error de sesión:', sessionError)
+        
+        // También intentar procesar cualquier hash fragment que pueda contener tokens
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const accessToken = hashParams.get('access_token')
+        const refreshToken = hashParams.get('refresh_token')
+        
+        console.log('🔍 Access token en hash:', accessToken ? 'Presente' : 'No encontrado')
+        console.log('🔍 Refresh token en hash:', refreshToken ? 'Presente' : 'No encontrado')
+        
+        if (sessionError) {
+          console.error('❌ Error in auth callback:', sessionError)
           navigate('/?error=auth_failed')
           return
         }
 
-        if (data.session) {
-          // Usuario autenticado exitosamente
+        if (sessionData.session) {
+          console.log('✅ Usuario autenticado exitosamente:', sessionData.session.user.email)
           navigate('/dashboard')
         } else {
-          // No hay sesión
+          console.log('⚠️ No hay sesión activa, redirigiendo a home')
           navigate('/')
         }
       } catch (error) {
-        console.error('Error handling auth callback:', error)
+        console.error('💥 Error handling auth callback:', error)
         navigate('/?error=auth_failed')
       }
     }
