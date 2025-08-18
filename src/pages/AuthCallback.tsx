@@ -13,18 +13,39 @@ const AuthCallback: React.FC = () => {
         console.log('🔍 Hash:', window.location.hash)
         console.log('🔍 Search params:', window.location.search)
         
-        // Primero, verificar si hay fragmentos en la URL que Supabase necesita procesar
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-        console.log('🔍 Sesión actual:', sessionData)
-        console.log('🔍 Error de sesión:', sessionError)
-        
-        // También intentar procesar cualquier hash fragment que pueda contener tokens
+        // Procesar tokens del hash fragment si están presentes
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
         const accessToken = hashParams.get('access_token')
         const refreshToken = hashParams.get('refresh_token')
         
         console.log('🔍 Access token en hash:', accessToken ? 'Presente' : 'No encontrado')
         console.log('🔍 Refresh token en hash:', refreshToken ? 'Presente' : 'No encontrado')
+        
+        // Si hay tokens en el hash, procesarlos con Supabase
+        if (accessToken && refreshToken) {
+          console.log('🔄 Estableciendo sesión con tokens del hash...')
+          const { data: authData, error: authError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          })
+          
+          if (authError) {
+            console.error('❌ Error estableciendo sesión:', authError)
+            navigate('/?error=auth_failed')
+            return
+          }
+          
+          if (authData.session) {
+            console.log('✅ Sesión establecida exitosamente:', authData.session.user.email)
+            navigate('/dashboard')
+            return
+          }
+        }
+        
+        // Fallback: verificar sesión existente
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+        console.log('🔍 Sesión actual:', sessionData)
+        console.log('🔍 Error de sesión:', sessionError)
         
         if (sessionError) {
           console.error('❌ Error in auth callback:', sessionError)
