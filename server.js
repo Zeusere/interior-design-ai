@@ -47,11 +47,11 @@ const API_CONFIG = {
     version: '30c1d0b916a6f8efce20493a5d61ee27491ab2a60437c13c588468b9810ec23f',
     apiKey: process.env.REPLICATE_API_KEY
   },
-  // Modelo de upscaling para mejora de calidad
+  // Modelo de upscaling para mejora de calidad - ACTUALIZADO
   replicateUpscale: {
     baseUrl: 'https://api.replicate.com/v1',
-    model: 'nightmareai/real-esrgan',
-    version: '42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b',
+    model: 'jingyunliang/swinir',
+    version: '660d922d33153019e8c263a3bba265de882e7f4f70396546b6c9c8f9d47a021a',
     apiKey: process.env.REPLICATE_API_KEY
   },
   openai: {
@@ -552,9 +552,9 @@ app.post('/api/enhance-image', upload.single('image'), async (req, res) => {
       });
     }
 
-    console.log('🔧 Llamando a Real-ESRGAN para mejora...');
+    console.log('🔧 Llamando a SwinIR para mejora de calidad...');
 
-    // Llamar a Replicate Real-ESRGAN para mejora de calidad
+    // Llamar a Replicate SwinIR para mejora de calidad
     const replicateResponse = await fetch(`${API_CONFIG.replicateUpscale.baseUrl}/predictions`, {
       method: 'POST',
       headers: {
@@ -565,8 +565,8 @@ app.post('/api/enhance-image', upload.single('image'), async (req, res) => {
         version: API_CONFIG.replicateUpscale.version,
         input: {
           image: publicImageUrl,
-          scale: 2, // Aumentar resolución x2
-          face_enhance: true // Mejorar rostros si los hay
+          task: "real_sr", // Tarea de super-resolución
+          scale: 2 // Aumentar resolución x2
         }
       })
     });
