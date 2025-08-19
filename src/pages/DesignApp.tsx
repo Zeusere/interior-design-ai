@@ -182,9 +182,6 @@ function DesignApp() {
         designOptions
       }, session.access_token)
       
-      // Mostrar mensaje de éxito
-      alert(`¡Proyecto "${projectName}" guardado exitosamente!`)
-      
     } catch (error) {
       console.error('Error guardando proyecto:', error)
       alert('Error al guardar el proyecto. Inténtalo de nuevo.')

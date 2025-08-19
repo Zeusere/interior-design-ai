@@ -445,10 +445,13 @@ export default function Dashboard() {
 
                   {/* Acciones */}
                   <div className="flex gap-2">
-                    <button className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                    <Link 
+                      to={`/project/${project.id}`}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                    >
                       <Eye className="w-4 h-4" />
                       Ver Proyecto
-                    </button>
+                    </Link>
                     <button className="p-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>

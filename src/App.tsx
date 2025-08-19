@@ -4,6 +4,7 @@ import Header from './components/Header.tsx'
 import LandingPage from './pages/LandingPage.tsx'
 import DesignApp from './pages/DesignApp.tsx'
 import Dashboard from './pages/Dashboard.tsx'
+import ProjectDetail from './pages/ProjectDetail.tsx'
 import AuthCallback from './pages/AuthCallback.tsx'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
@@ -30,6 +31,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/project/:id" 
+              element={
+                <ProtectedRoute>
+                  <ProjectDetail />
                 </ProtectedRoute>
               } 
             />
