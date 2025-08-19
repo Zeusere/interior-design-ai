@@ -153,7 +153,7 @@ function DesignApp() {
     }
   }
 
-  const handleSaveProject = (images: ProcessedImage[]) => {
+  const handleSaveProject = () => {
     if (!user) {
       alert('Debes estar logueado para guardar proyectos')
       return

@@ -4,7 +4,7 @@ import type { ProcessedImage } from '../types'
 
 interface ResultsGalleryProps {
   images: ProcessedImage[]
-  onSaveProject?: (images: ProcessedImage[]) => void
+  onSaveProject?: () => void
   canSave?: boolean
 }
 
@@ -81,7 +81,7 @@ const ResultsGallery = ({ images, onSaveProject, canSave = false }: ResultsGalle
           <motion.button
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            onClick={() => onSaveProject?.(images)}
+            onClick={() => onSaveProject?.()}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
           >
             <Save className="w-4 h-4" />
