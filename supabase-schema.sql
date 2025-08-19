@@ -63,7 +63,20 @@ CREATE TABLE public.images (
 );
 
 -- ===============================================
--- 4. TABLA DE HISTORIAL DE FACTURACIÓN
+-- 4. TABLA DE RELACIÓN PROYECTO-IMÁGENES
+-- ===============================================
+CREATE TABLE public.project_images (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
+    image_id UUID REFERENCES public.images(id) ON DELETE CASCADE NOT NULL,
+    image_type TEXT NOT NULL CHECK (image_type IN ('original', 'processed', 'enhanced')),
+    display_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(project_id, image_id)
+);
+
+-- ===============================================
+-- 5. TABLA DE HISTORIAL DE FACTURACIÓN
 -- ===============================================
 CREATE TABLE public.billing_history (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -100,6 +113,8 @@ CREATE INDEX idx_projects_status ON public.projects(status);
 CREATE INDEX idx_images_user_id ON public.images(user_id);
 CREATE INDEX idx_images_project_id ON public.images(project_id);
 CREATE INDEX idx_images_auto_delete ON public.images(auto_delete_at) WHERE is_temporary = TRUE;
+CREATE INDEX idx_project_images_project_id ON public.project_images(project_id);
+CREATE INDEX idx_project_images_image_id ON public.project_images(image_id);
 CREATE INDEX idx_billing_user_id ON public.billing_history(user_id);
 CREATE INDEX idx_credit_usage_user_id ON public.credit_usage(user_id);
 
@@ -111,6 +126,7 @@ CREATE INDEX idx_credit_usage_user_id ON public.credit_usage(user_id);
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.project_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.billing_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.credit_usage ENABLE ROW LEVEL SECURITY;
 
@@ -133,6 +149,20 @@ CREATE POLICY "Users can delete own images" ON public.images FOR DELETE USING (a
 
 -- Políticas para billing_history (solo lectura para usuarios)
 CREATE POLICY "Users can view own billing" ON public.billing_history FOR SELECT USING (auth.uid() = user_id);
+
+-- Políticas para project_images
+CREATE POLICY "Users can view project images" ON public.project_images FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.projects WHERE projects.id = project_images.project_id AND projects.user_id = auth.uid())
+);
+CREATE POLICY "Users can create project images" ON public.project_images FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.projects WHERE projects.id = project_images.project_id AND projects.user_id = auth.uid())
+);
+CREATE POLICY "Users can update project images" ON public.project_images FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.projects WHERE projects.id = project_images.project_id AND projects.user_id = auth.uid())
+);
+CREATE POLICY "Users can delete project images" ON public.project_images FOR DELETE USING (
+    EXISTS (SELECT 1 FROM public.projects WHERE projects.id = project_images.project_id AND projects.user_id = auth.uid())
+);
 
 -- Políticas para credit_usage (solo lectura para usuarios)
 CREATE POLICY "Users can view own credit usage" ON public.credit_usage FOR SELECT USING (auth.uid() = user_id);

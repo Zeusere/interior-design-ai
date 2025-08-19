@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { aiService } from '../services/aiService.ts'
 import { BackendService } from '../services/backendService.ts'
 import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 import type { DesignOptions, ProcessedImage } from '../types'
 
 function DesignApp() {
@@ -166,15 +167,20 @@ function DesignApp() {
     
     setIsSaving(true)
     try {
+      // Obtener el token de acceso actual
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('No se pudo obtener el token de acceso')
+      }
+
       const processedUrls = processedImages.map(img => img.processedUrl)
       
       await BackendService.saveProject({
         projectName,
-        userId: user.id,
         originalImageUrl: uploadedImage,
         processedImageUrls: processedUrls,
         designOptions
-      })
+      }, session.access_token)
       
       // Mostrar mensaje de éxito
       alert(`¡Proyecto "${projectName}" guardado exitosamente!`)

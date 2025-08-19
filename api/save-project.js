@@ -3,25 +3,40 @@ import Cors from 'cors'
 
 // Configurar Supabase
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
 
 console.log('🔧 Configurando Supabase:', { 
   supabaseUrl: !!supabaseUrl, 
-  supabaseServiceKey: !!supabaseServiceKey,
-  env: {
-    SUPABASE_URL: !!process.env.SUPABASE_URL,
-    VITE_SUPABASE_URL: !!process.env.VITE_SUPABASE_URL,
-    SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
-    VITE_SUPABASE_ANON_KEY: !!process.env.VITE_SUPABASE_ANON_KEY
-  }
+  supabaseAnonKey: !!supabaseAnonKey
 })
 
-if (!supabaseUrl || !supabaseServiceKey) {
+if (!supabaseUrl || !supabaseAnonKey) {
   console.error('❌ Variables de Supabase no configuradas')
   throw new Error('Variables de Supabase requeridas no encontradas')
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+// Crear cliente base (sin autenticación)
+const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+})
+
+// Función para crear cliente autenticado
+const getAuthenticatedSupabase = (accessToken) => {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    }
+  })
+}
 
 // Configurar CORS
 const corsOptions = {
@@ -63,9 +78,36 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 1. Obtener token de autenticación del header
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        error: 'Token de autenticación requerido',
+        hint: 'Incluye Authorization: Bearer <token> en el header'
+      })
+    }
+
+    const accessToken = authHeader.replace('Bearer ', '')
+    console.log('🔐 Token recibido:', accessToken.substring(0, 20) + '...')
+
+    // 2. Crear cliente autenticado
+    const supabase = getAuthenticatedSupabase(accessToken)
+
+    // 3. Verificar que el usuario está autenticado
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error('❌ Error de autenticación:', authError)
+      return res.status(401).json({ 
+        error: 'Token de autenticación inválido',
+        details: authError?.message 
+      })
+    }
+
+    console.log('✅ Usuario autenticado:', user.id, user.email)
+
+    // 4. Obtener datos del body
     const { 
       projectName, 
-      userId, 
       originalImageUrl, 
       processedImageUrls = [],
       designOptions = {} 
@@ -73,20 +115,22 @@ export default async function handler(req, res) {
 
     console.log('📋 Guardando proyecto:', { 
       projectName, 
-      userId, 
+      userId: user.id,
       originalImageUrl: originalImageUrl ? 'presente' : 'ausente', 
       processedImageUrls: processedImageUrls.length,
       designOptions 
     })
 
-    // Validar datos requeridos
-    if (!projectName || !userId || !originalImageUrl) {
-      console.error('❌ Datos faltantes:', { projectName: !!projectName, userId: !!userId, originalImageUrl: !!originalImageUrl })
+    // 5. Validar datos requeridos (userId viene de la autenticación)
+    if (!projectName || !originalImageUrl) {
+      console.error('❌ Datos faltantes:', { projectName: !!projectName, originalImageUrl: !!originalImageUrl })
       return res.status(400).json({ 
-        error: 'Datos requeridos: projectName, userId, originalImageUrl',
-        received: { projectName: !!projectName, userId: !!userId, originalImageUrl: !!originalImageUrl }
+        error: 'Datos requeridos: projectName, originalImageUrl',
+        received: { projectName: !!projectName, originalImageUrl: !!originalImageUrl }
       })
     }
+
+    const userId = user.id
 
     // 1. Crear el proyecto
     const { data: project, error: projectError } = await supabase
@@ -229,3 +273,4 @@ export default async function handler(req, res) {
     })
   }
 }
+

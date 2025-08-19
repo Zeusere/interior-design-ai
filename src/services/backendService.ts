@@ -168,11 +168,10 @@ export class BackendService {
 
   static async saveProject(data: {
     projectName: string
-    userId: string
     originalImageUrl: string
     processedImageUrls: string[]
     designOptions: DesignOptions
-  }): Promise<any> {
+  }, accessToken: string): Promise<any> {
     try {
       console.log('💾 Guardando proyecto:', data.projectName)
       
@@ -181,7 +180,8 @@ export class BackendService {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify(data)
       })
