@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import Header from './components/Header.tsx'
 import LandingPage from './pages/LandingPage.tsx'
 import DesignApp from './pages/DesignApp.tsx'
+import Dashboard from './pages/Dashboard.tsx'
 import AuthCallback from './pages/AuthCallback.tsx'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
@@ -28,10 +29,7 @@ function App() {
               path="/dashboard" 
               element={
                 <ProtectedRoute>
-                  {/* TODO: Create Dashboard component */}
-                  <div className="min-h-screen flex items-center justify-center">
-                    <h1 className="text-2xl">Dashboard - Coming Soon</h1>
-                  </div>
+                  <Dashboard />
                 </ProtectedRoute>
               } 
             />
