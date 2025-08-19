@@ -1,15 +1,24 @@
 import { createClient } from '@supabase/supabase-js'
-import cors from 'cors'
+import Cors from 'cors'
 
 // Configurar Supabase
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+
+console.log('🔧 Configurando Supabase:', { 
+  supabaseUrl: !!supabaseUrl, 
+  supabaseServiceKey: !!supabaseServiceKey,
+  env: {
+    SUPABASE_URL: !!process.env.SUPABASE_URL,
+    VITE_SUPABASE_URL: !!process.env.VITE_SUPABASE_URL,
+    SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
+    VITE_SUPABASE_ANON_KEY: !!process.env.VITE_SUPABASE_ANON_KEY
+  }
+})
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('❌ Variables de Supabase no configuradas:', { 
-    supabaseUrl: !!supabaseUrl, 
-    supabaseServiceKey: !!supabaseServiceKey 
-  })
+  console.error('❌ Variables de Supabase no configuradas')
+  throw new Error('Variables de Supabase requeridas no encontradas')
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -27,7 +36,7 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }
 
-const corsMiddleware = cors(corsOptions)
+const corsMiddleware = Cors(corsOptions)
 
 // Función para ejecutar middleware
 const runMiddleware = (req, res, fn) => {
@@ -65,15 +74,17 @@ export default async function handler(req, res) {
     console.log('📋 Guardando proyecto:', { 
       projectName, 
       userId, 
-      originalImageUrl, 
+      originalImageUrl: originalImageUrl ? 'presente' : 'ausente', 
       processedImageUrls: processedImageUrls.length,
       designOptions 
     })
 
     // Validar datos requeridos
     if (!projectName || !userId || !originalImageUrl) {
+      console.error('❌ Datos faltantes:', { projectName: !!projectName, userId: !!userId, originalImageUrl: !!originalImageUrl })
       return res.status(400).json({ 
-        error: 'Datos requeridos: projectName, userId, originalImageUrl' 
+        error: 'Datos requeridos: projectName, userId, originalImageUrl',
+        received: { projectName: !!projectName, userId: !!userId, originalImageUrl: !!originalImageUrl }
       })
     }
 
@@ -91,8 +102,18 @@ export default async function handler(req, res) {
       .single()
 
     if (projectError) {
-      console.error('❌ Error creando proyecto:', projectError)
-      return res.status(500).json({ error: 'Error creando proyecto', details: projectError.message })
+      console.error('❌ Error creando proyecto:', {
+        error: projectError,
+        message: projectError.message,
+        details: projectError.details,
+        hint: projectError.hint,
+        code: projectError.code
+      })
+      return res.status(500).json({ 
+        error: 'Error creando proyecto', 
+        details: projectError.message,
+        supabaseError: projectError 
+      })
     }
 
     console.log('✅ Proyecto creado:', project.id)
