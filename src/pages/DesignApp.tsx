@@ -2,12 +2,16 @@ import { useState } from 'react'
 import ImageUpload, { type UploadedImageInfo } from '../components/ImageUpload.tsx'
 import EditingOptions from '../components/EditingOptions.tsx'
 import ResultsGallery from '../components/ResultsGallery.tsx'
+import SaveProjectModal from '../components/SaveProjectModal.tsx'
 import SEO from '../components/SEO'
 import { motion } from 'framer-motion'
 import { aiService } from '../services/aiService.ts'
+import { BackendService } from '../services/backendService.ts'
+import { useAuth } from '../contexts/AuthContext'
 import type { DesignOptions, ProcessedImage } from '../types'
 
 function DesignApp() {
+  const { user } = useAuth()
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [designOptions, setDesignOptions] = useState<DesignOptions>({
     style: 'modern',
@@ -20,6 +24,10 @@ function DesignApp() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isMultiMode, setIsMultiMode] = useState(false)
+  
+  // Estado para guardar proyecto
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   const handleImageUpload = (imageUrl: string) => {
     setUploadedImage(imageUrl)
@@ -108,7 +116,7 @@ function DesignApp() {
     
     try {
       // Generar diseño con IA
-      const processedImageUrl = await aiService.generateDesign(uploadedImage, designOptions)
+      const processedImageUrl = await aiService.generateDesign(uploadedImage, designOptions, undefined, user?.id)
       
       const newProcessedImage: ProcessedImage = {
         id: Date.now().toString(),
@@ -142,6 +150,41 @@ function DesignApp() {
       setProcessedImages(prev => [newProcessedImage, ...prev])
     } finally {
       setIsProcessing(false)
+    }
+  }
+
+  const handleSaveProject = (images: ProcessedImage[]) => {
+    if (!user) {
+      alert('Debes estar logueado para guardar proyectos')
+      return
+    }
+    setShowSaveModal(true)
+  }
+
+  const handleConfirmSave = async (projectName: string) => {
+    if (!user || !uploadedImage) return
+    
+    setIsSaving(true)
+    try {
+      const processedUrls = processedImages.map(img => img.processedUrl)
+      
+      await BackendService.saveProject({
+        projectName,
+        userId: user.id,
+        originalImageUrl: uploadedImage,
+        processedImageUrls: processedUrls,
+        designOptions
+      })
+      
+      // Mostrar mensaje de éxito
+      alert(`¡Proyecto "${projectName}" guardado exitosamente!`)
+      
+    } catch (error) {
+      console.error('Error guardando proyecto:', error)
+      alert('Error al guardar el proyecto. Inténtalo de nuevo.')
+      throw error // Para que el modal maneje el error
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -232,12 +275,24 @@ function DesignApp() {
                 transition={{ duration: 0.6, delay: 0.6 }}
                 className="order-2"
               >
-                <ResultsGallery images={processedImages} />
+                <ResultsGallery 
+                  images={processedImages} 
+                  onSaveProject={handleSaveProject}
+                  canSave={!!user && !!uploadedImage}
+                />
               </motion.div>
             )}
           </div>
         </motion.div>
       </div>
+
+      {/* Modal para guardar proyecto */}
+      <SaveProjectModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onSave={handleConfirmSave}
+        isLoading={isSaving}
+      />
     </main>
   )
 }

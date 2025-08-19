@@ -231,12 +231,13 @@ class AIService {
   async generateDesign(
     imageData: string, 
     options: DesignOptions, 
-    preferredProvider?: AIProviderType
+    preferredProvider?: AIProviderType,
+    userId?: string
   ): Promise<string> {
     try {
       // Intentar primero con el backend
       console.log('🚀 Intentando generación con backend...')
-      return await BackendService.generateDesign(imageData, options)
+      return await BackendService.generateDesign(imageData, options, userId)
     } catch (backendError) {
       console.warn('⚠️ Backend no disponible, usando fallback:', backendError)
       

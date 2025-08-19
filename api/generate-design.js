@@ -411,6 +411,37 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
         
         console.log('✅ Diseño generado exitosamente');
         
+        // Guardar en la base de datos
+        try {
+          const userId = req.headers['x-user-id']; // Pasaremos esto desde el frontend
+          
+          if (userId) {
+            const { data: savedImage, error: dbError } = await supabase
+              .from('images')
+              .insert([{
+                user_id: userId,
+                original_url: publicImageUrl,      // Imagen original
+                processed_url: resultImageUrl,     // Imagen procesada por IA
+                room_type: options.roomType || 'living-room',
+                style_applied: options.style || 'modern',
+                processing_options: options,
+                processing_status: 'completed',
+                is_temporary: true,  // Por defecto temporal (hasta que el usuario la guarde)
+                auto_delete_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 días
+              }])
+              .select()
+              .single();
+
+            if (dbError) {
+              console.error('⚠️ Error guardando en BD (continuando):', dbError);
+            } else {
+              console.log('✅ Imagen guardada en BD:', savedImage.id);
+            }
+          }
+        } catch (dbError) {
+          console.error('⚠️ Error en BD (continuando):', dbError);
+        }
+        
         // Limpiar archivo temporal
         fs.unlinkSync(req.file.path);
         

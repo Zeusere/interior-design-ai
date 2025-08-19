@@ -36,11 +36,12 @@ function dataURLtoFile(dataurl: string, filename: string): File {
 }
 
 export class BackendService {
-  static async generateDesign(imageData: string, options: DesignOptions): Promise<string> {
+  static async generateDesign(imageData: string, options: DesignOptions, userId?: string): Promise<string> {
     try {
       console.log('🎨 Iniciando generación con backend...')
       console.log('📋 Backend URL:', BACKEND_URL)
       console.log('📋 Options:', options)
+      console.log('📋 UserId:', userId)
       console.log('📋 ImageData length:', imageData.length)
       console.log('📋 ImageData start:', imageData.substring(0, 50))
       
@@ -57,9 +58,16 @@ export class BackendService {
       const apiUrl = getBackendUrl('/api/generate-design')
       console.log('📤 URL completa:', apiUrl)
       
+      // Preparar headers
+      const headers: Record<string, string> = {}
+      if (userId) {
+        headers['x-user-id'] = userId
+      }
+      
       // Hacer llamada al backend
       const response = await fetch(apiUrl, {
         method: 'POST',
+        headers: headers,
         body: formData
       })
 
@@ -155,6 +163,41 @@ export class BackendService {
     } catch (error) {
       console.error('❌ Error verificando health del backend:', error)
       throw new Error('No se puede conectar al servidor backend')
+    }
+  }
+
+  static async saveProject(data: {
+    projectName: string
+    userId: string
+    originalImageUrl: string
+    processedImageUrls: string[]
+    designOptions: DesignOptions
+  }): Promise<any> {
+    try {
+      console.log('💾 Guardando proyecto:', data.projectName)
+      
+      const apiUrl = getBackendUrl('/api/save-project')
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log('✅ Proyecto guardado:', result.project.name)
+      
+      return result
+    } catch (error) {
+      console.error('❌ Error guardando proyecto:', error)
+      throw error
     }
   }
 }
