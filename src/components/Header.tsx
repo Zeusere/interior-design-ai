@@ -115,13 +115,13 @@ const Header = () => {
                     Dashboard
                   </Link>
                   
-                  <a 
-                    href="#" 
+                  <Link 
+                    to="/help" 
                     className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-purple-50 transition-colors font-medium"
                   >
                     <HelpCircle className="w-4 h-4" />
                     Ayuda
-                  </a>
+                  </Link>
                   
                   {user && (
                     <div className="flex items-center gap-4">
@@ -323,14 +323,14 @@ const Header = () => {
                     <span className="font-medium">Dashboard</span>
                   </Link>
                   
-                  <a 
-                    href="#" 
+                  <Link 
+                    to="/help" 
                     className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
                     onClick={() => setShowMobileMenu(false)}
                   >
                     <HelpCircle className="w-5 h-5" />
                     <span className="font-medium">Ayuda</span>
-                  </a>
+                  </Link>
 
                   {user && (
                     <>
