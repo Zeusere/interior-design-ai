@@ -236,7 +236,7 @@ export default function ProjectDetail() {
                 </div>
                 <div className="flex items-center gap-2">
                   <ImageIcon className="w-4 h-4" />
-                  {project.images.length} diseños
+                  {project.images.filter(img => img.image_type === 'processed').length} diseños
                 </div>
               </div>
             </div>

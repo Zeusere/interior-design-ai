@@ -266,12 +266,14 @@ export default function Dashboard() {
                   <div className="p-3 bg-blue-100 rounded-xl">
                     <ImageIcon className="w-6 h-6 text-blue-600" />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-800">
-                      {projects.reduce((total, project) => total + project.images.length, 0)}
-                    </p>
-                    <p className="text-gray-600">Diseños Creados</p>
-                  </div>
+                                  <div>
+                  <p className="text-2xl font-bold text-gray-800">
+                    {projects.reduce((total, project) => 
+                      total + project.images.filter(img => img.image_type === 'processed').length, 0
+                    )}
+                  </p>
+                  <p className="text-gray-600">Diseños Creados</p>
+                </div>
                 </div>
               </motion.div>
 
@@ -406,9 +408,9 @@ export default function Dashboard() {
                     </button>
                   </div>
 
-                  {/* Badge de cantidad de imágenes */}
+                  {/* Badge de cantidad de diseños */}
                   <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {project.images.length} diseños
+                    {project.images.filter(img => img.image_type === 'processed').length} diseños
                   </div>
                 </div>
 
