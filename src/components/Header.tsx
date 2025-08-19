@@ -1,4 +1,4 @@
-import { Palette, Sparkles, User, LogOut, Settings, CreditCard, Menu, X, Home, LayoutDashboard, HelpCircle, Zap } from 'lucide-react'
+import { Palette, Sparkles, User, LogOut, Settings, CreditCard, Menu, X, LayoutDashboard, HelpCircle, Zap } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
