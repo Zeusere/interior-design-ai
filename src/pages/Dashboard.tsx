@@ -305,9 +305,9 @@ export default function Dashboard() {
             className="text-center max-w-4xl mx-auto"
           >
             <div className="bg-white rounded-3xl p-12 shadow-xl">
-              {/* Ilustración/mockup de proyectos */}
+              {/* Ilustración/mockup de proyectos - Solo en desktop */}
               <div className="mb-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 opacity-30">
+                <div className="hidden md:grid grid-cols-3 gap-4 mb-8 opacity-30">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="bg-gray-100 rounded-xl p-4">
                       <div className="bg-gray-200 rounded-lg h-32 mb-3 flex items-center justify-center">
