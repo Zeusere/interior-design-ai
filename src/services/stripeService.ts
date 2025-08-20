@@ -110,7 +110,6 @@ class StripeService {
       })
 
       if (response.status === 403) {
-        const errorData = await response.json()
         throw new Error('Usage limit exceeded')
       }
 
