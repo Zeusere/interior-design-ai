@@ -5,12 +5,37 @@ import { useAuth } from '../contexts/AuthContext'
 import { useSubscription, useIsProUser, useUsageInfo } from '../contexts/SubscriptionContext'
 import SEO from '../components/SEO'
 
+
 const PricingPage = () => {
   const { user } = useAuth()
   const { handleUpgrade } = useSubscription()
   const isProUser = useIsProUser()
   const { current, max } = useUsageInfo()
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly')
+
+  const handlePlanClick = async (planType: 'monthly' | 'yearly') => {
+    console.log('Plan clicked:', planType, 'User:', user?.id, 'IsProUser:', isProUser)
+    
+    if (!user?.id) {
+      // Redirigir a login/registro
+      alert('Necesitas registrarte primero para poder subscribirte. Te redirigiremos a la app.')
+      window.location.href = '/app'
+      return
+    }
+
+    if (isProUser) {
+      alert('Ya tienes una suscripción Pro activa.')
+      return
+    }
+
+    try {
+      console.log('Attempting to upgrade to:', planType)
+      await handleUpgrade(planType)
+    } catch (error) {
+      console.error('Error upgrading:', error)
+      alert('Error al procesar el pago. Por favor, inténtalo de nuevo.')
+    }
+  }
 
   const plans = {
     free: {
@@ -260,15 +285,15 @@ const PricingPage = () => {
             </div>
 
             <button
-              onClick={() => handleUpgrade('monthly')}
-              disabled={!user || isProUser}
+              onClick={() => handlePlanClick('monthly')}
               className={`w-full py-3 px-4 rounded-lg transition-all font-medium ${
                 selectedPlan === 'monthly'
                   ? 'bg-purple-600 text-white hover:bg-purple-700'
                   : 'border border-purple-600 text-purple-600 hover:bg-purple-50'
-              } ${(!user || isProUser) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${isProUser ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isProUser}
             >
-              {!user ? 'Regístrate Primero' : isProUser ? 'Ya eres Pro' : 'Seleccionar Plan'}
+              {!user ? 'Regístrate y Selecciona' : isProUser ? 'Ya eres Pro' : 'Seleccionar Plan'}
             </button>
           </motion.div>
 
@@ -315,15 +340,20 @@ const PricingPage = () => {
             </div>
 
             <button
-              onClick={() => handleUpgrade('yearly')}
-              disabled={!user || isProUser}
+              onClick={() => handlePlanClick('yearly')}
               className={`w-full py-3 px-4 rounded-lg transition-all font-medium ${
                 selectedPlan === 'yearly'
                   ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg'
                   : 'border border-purple-600 text-purple-600 hover:bg-purple-50'
-              } ${(!user || isProUser) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${isProUser ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isProUser}
             >
-              {!user ? 'Regístrate Primero' : isProUser ? 'Ya eres Pro' : (
+              {!user ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Crown className="w-4 h-4" />
+                  Regístrate y Selecciona
+                </div>
+              ) : isProUser ? 'Ya eres Pro' : (
                 <div className="flex items-center justify-center gap-2">
                   <Crown className="w-4 h-4" />
                   Seleccionar Plan

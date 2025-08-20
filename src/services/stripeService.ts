@@ -26,7 +26,11 @@ class StripeService {
 
   async createCheckoutSession(request: CreateSubscriptionRequest): Promise<string> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/stripe/create-checkout-session`, {
+      console.log('Creating checkout session with:', request)
+      console.log('Base URL:', this.baseUrl)
+      console.log('API URL:', `${this.baseUrl}/api/stripe-checkout`)
+      
+      const response = await fetch(`${this.baseUrl}/api/stripe-checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,8 +38,12 @@ class StripeService {
         body: JSON.stringify(request)
       })
 
+      console.log('Response status:', response.status)
+      
       if (!response.ok) {
-        throw new Error('Error creating checkout session')
+        const errorText = await response.text()
+        console.error('Error response:', errorText)
+        throw new Error(`Error creating checkout session: ${response.status} - ${errorText}`)
       }
 
       const { sessionId } = await response.json()
@@ -61,28 +69,37 @@ class StripeService {
 
   async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/stripe/subscription-status/${userId}`)
+      console.log('getSubscriptionStatus: fetching for userId:', userId)
+      const response = await fetch(`${this.baseUrl}/api/subscription-status?userId=${userId}`)
+      
+      console.log('getSubscriptionStatus: response status:', response.status)
       
       if (!response.ok) {
-        throw new Error('Error fetching subscription status')
+        const errorText = await response.text()
+        console.error('getSubscriptionStatus: Error response:', errorText)
+        throw new Error(`Error fetching subscription status: ${response.status} - ${errorText}`)
       }
 
-      return await response.json()
+      const result = await response.json()
+      console.log('getSubscriptionStatus: success:', result)
+      return result
     } catch (error) {
       console.error('Error fetching subscription status:', error)
       // Return default free status if error
-      return {
+      const defaultStatus: SubscriptionStatus = {
         isActive: false,
-        plan: 'free',
+        plan: 'free' as const,
         usageCount: 0,
         maxUsage: 5
       }
+      console.log('getSubscriptionStatus: returning default status:', defaultStatus)
+      return defaultStatus
     }
   }
 
   async cancelSubscription(userId: string): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/stripe/cancel-subscription`, {
+      const response = await fetch(`${this.baseUrl}/api/cancel-subscription`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +118,8 @@ class StripeService {
 
   async updateUsageCount(userId: string): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/stripe/update-usage`, {
+      console.log('updateUsageCount: calling API for userId:', userId)
+      const response = await fetch(`${this.baseUrl}/api/update-usage`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,9 +127,22 @@ class StripeService {
         body: JSON.stringify({ userId })
       })
 
-      if (!response.ok) {
-        throw new Error('Error updating usage count')
+      console.log('updateUsageCount: response status:', response.status)
+
+      if (response.status === 403) {
+        const errorData = await response.json()
+        console.log('Usage limit exceeded:', errorData)
+        throw new Error('Usage limit exceeded')
       }
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('updateUsageCount: Error response:', errorText)
+        throw new Error(`Error updating usage count: ${response.status} - ${errorText}`)
+      }
+
+      const result = await response.json()
+      console.log('updateUsageCount: success:', result)
     } catch (error) {
       console.error('Error updating usage count:', error)
       throw error
