@@ -13,7 +13,6 @@ import type { DesignOptions, ProcessedImage } from '../types'
 
 function DesignApp() {
   const { user } = useAuth()
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [designOptions, setDesignOptions] = useState<DesignOptions>({
     style: 'modern',
     architecture: 'contemporary',
@@ -24,19 +23,16 @@ function DesignApp() {
   const [processedImages, setProcessedImages] = useState<ProcessedImage[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isMultiMode, setIsMultiMode] = useState(false)
+  const [uploadedImages, setUploadedImages] = useState<UploadedImageInfo[]>([])
   
   // Estado para guardar proyecto
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  const handleImageUpload = (imageUrl: string) => {
-    setUploadedImage(imageUrl)
-  }
-
   const handleMultipleImagesUpload = async (images: UploadedImageInfo[]) => {
     setIsProcessing(true)
     setErrorMessage(null)
+    setUploadedImages(images) // Actualizar el estado de imágenes subidas
     
     try {
       // Procesar cada imagen con su tipo de habitación específico
@@ -109,51 +105,6 @@ function DesignApp() {
     }
   }
 
-  const handleProcessImage = async () => {
-    if (!uploadedImage) return
-
-    setIsProcessing(true)
-    setErrorMessage(null)
-    
-    try {
-      // Generar diseño con IA
-      const processedImageUrl = await aiService.generateDesign(uploadedImage, designOptions, undefined, user?.id)
-      
-      const newProcessedImage: ProcessedImage = {
-        id: Date.now().toString(),
-        originalUrl: uploadedImage,
-        processedUrl: processedImageUrl,
-        options: { ...designOptions },
-        timestamp: new Date(),
-        status: 'completed'
-      }
-      
-      setProcessedImages(prev => [newProcessedImage, ...prev])
-    } catch (error) {
-      console.error('Error al procesar la imagen:', error)
-      
-      // Mostrar mensaje de error más específico
-      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
-      setErrorMessage(errorMsg)
-      
-      // En caso de error, mostrar mensaje al usuario
-      // Por ahora, usamos la imagen original como fallback
-      const newProcessedImage: ProcessedImage = {
-        id: Date.now().toString(),
-        originalUrl: uploadedImage,
-        processedUrl: uploadedImage,
-        options: { ...designOptions },
-        timestamp: new Date(),
-        status: 'error',
-        error: errorMsg
-      }
-      
-      setProcessedImages(prev => [newProcessedImage, ...prev])
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
   const handleSaveProject = () => {
     if (!user) {
       alert('Debes estar logueado para guardar proyectos')
@@ -163,7 +114,7 @@ function DesignApp() {
   }
 
   const handleConfirmSave = async (projectName: string) => {
-    if (!user || !uploadedImage) return
+    if (!user || uploadedImages.length === 0) return
     
     setIsSaving(true)
     try {
@@ -174,10 +125,11 @@ function DesignApp() {
       }
 
       const processedUrls = processedImages.map(img => img.processedUrl)
+      const originalUrls = uploadedImages.map(img => img.url)
       
       await BackendService.saveProject({
         projectName,
-        originalImageUrl: uploadedImage,
+        originalImageUrl: originalUrls[0], // Por compatibilidad, usar la primera imagen
         processedImageUrls: processedUrls,
         designOptions
       }, session.access_token)
@@ -226,8 +178,8 @@ function DesignApp() {
           <EditingOptions 
             options={designOptions}
             onChange={setDesignOptions}
-            disabled={isProcessing || (!isMultiMode && !uploadedImage)}
-            multiMode={isMultiMode}
+            disabled={isProcessing || uploadedImages.length === 0}
+            multiMode={true}
           />
         </motion.div>
 
@@ -241,13 +193,9 @@ function DesignApp() {
           <div className="space-y-8">
             {/* Upload de imagen - PRIMERO en móvil */}
             <ImageUpload 
-              onImageUpload={handleImageUpload}
-              uploadedImage={uploadedImage}
-              isProcessing={isProcessing}
-              onProcessImage={handleProcessImage}
               onMultipleImagesUpload={handleMultipleImagesUpload}
+              isProcessing={isProcessing}
               onImageEnhance={handleImageEnhance}
-              onModeChange={setIsMultiMode}
             />
 
             {/* Mensaje de error */}
@@ -281,7 +229,7 @@ function DesignApp() {
                 <ResultsGallery 
                   images={processedImages} 
                   onSaveProject={handleSaveProject}
-                  canSave={!!user && !!uploadedImage}
+                  canSave={!!user && uploadedImages.length > 0}
                 />
               </motion.div>
             )}
