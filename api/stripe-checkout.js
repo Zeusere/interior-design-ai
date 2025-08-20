@@ -1,15 +1,6 @@
 const Stripe = require('stripe')
 const { createClient } = require('@supabase/supabase-js')
 
-// Debug environment variables
-console.log('stripe-checkout Environment check:', {
-  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ? 'SET' : 'MISSING',
-  SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'MISSING',
-  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING',
-  STRIPE_MONTHLY_PRICE_ID: process.env.STRIPE_MONTHLY_PRICE_ID ? 'SET' : 'MISSING',
-  STRIPE_YEARLY_PRICE_ID: process.env.STRIPE_YEARLY_PRICE_ID ? 'SET' : 'MISSING'
-})
-
 // Configuración
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
 const supabase = createClient(
@@ -17,15 +8,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-// Configuración de precios (configura estos IDs en tu dashboard de Stripe)
+// Configuración de precios
 const PRICE_IDS = {
   monthly: process.env.STRIPE_MONTHLY_PRICE_ID,
   yearly: process.env.STRIPE_YEARLY_PRICE_ID
 }
 
 module.exports = async (req, res) => {
-  console.log('stripe-checkout: Received request', { method: req.method, body: req.body })
-  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -33,27 +22,14 @@ module.exports = async (req, res) => {
   try {
     const { planType, userId, userEmail, successUrl, cancelUrl } = req.body
 
-    console.log('stripe-checkout: Processing request', { planType, userId, userEmail })
-    console.log('stripe-checkout: Available PRICE_IDS:', PRICE_IDS)
-
     if (!planType || !userId || !userEmail) {
-      console.log('stripe-checkout: Missing required fields')
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
     if (!PRICE_IDS[planType]) {
-      console.log('stripe-checkout: Invalid plan type:', planType, 'Available:', PRICE_IDS)
       return res.status(400).json({ error: 'Invalid plan type' })
     }
 
-    // Test básico - devolver sessionId falso por ahora
-    console.log('stripe-checkout: Would create session for:', planType, 'with price:', PRICE_IDS[planType])
-    
-    return res.status(200).json({
-      sessionId: 'test_session_id_12345'
-    })
-
-    /* TODO: Resto del código de Stripe - comentado temporalmente
     // Verificar si el usuario ya existe en la base de datos
     const { data: existingUser } = await supabase
       .from('user_subscriptions')
@@ -82,7 +58,7 @@ module.exports = async (req, res) => {
           email: userEmail,
           plan: 'free',
           usage_count: 0,
-          max_usage: 1,
+          max_usage: 5,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })

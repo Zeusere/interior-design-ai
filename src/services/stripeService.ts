@@ -26,10 +26,6 @@ class StripeService {
 
   async createCheckoutSession(request: CreateSubscriptionRequest): Promise<string> {
     try {
-      console.log('Creating checkout session with:', request)
-      console.log('Base URL:', this.baseUrl)
-      console.log('API URL:', `${this.baseUrl}/api/stripe-checkout`)
-      
       const response = await fetch(`${this.baseUrl}/api/stripe-checkout`, {
         method: 'POST',
         headers: {
@@ -37,13 +33,9 @@ class StripeService {
         },
         body: JSON.stringify(request)
       })
-
-      console.log('Response status:', response.status)
       
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Error response:', errorText)
-        throw new Error(`Error creating checkout session: ${response.status} - ${errorText}`)
+        throw new Error('Error creating checkout session')
       }
 
       const { sessionId } = await response.json()
@@ -69,31 +61,22 @@ class StripeService {
 
   async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
     try {
-      console.log('getSubscriptionStatus: fetching for userId:', userId)
       const response = await fetch(`${this.baseUrl}/api/subscription-status?userId=${userId}`)
       
-      console.log('getSubscriptionStatus: response status:', response.status)
-      
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error('getSubscriptionStatus: Error response:', errorText)
-        throw new Error(`Error fetching subscription status: ${response.status} - ${errorText}`)
+        throw new Error('Error fetching subscription status')
       }
 
-      const result = await response.json()
-      console.log('getSubscriptionStatus: success:', result)
-      return result
+      return await response.json()
     } catch (error) {
       console.error('Error fetching subscription status:', error)
       // Return default free status if error
-      const defaultStatus: SubscriptionStatus = {
+      return {
         isActive: false,
         plan: 'free' as const,
         usageCount: 0,
         maxUsage: 5
       }
-      console.log('getSubscriptionStatus: returning default status:', defaultStatus)
-      return defaultStatus
     }
   }
 
@@ -118,7 +101,6 @@ class StripeService {
 
   async updateUsageCount(userId: string): Promise<void> {
     try {
-      console.log('updateUsageCount: calling API for userId:', userId)
       const response = await fetch(`${this.baseUrl}/api/update-usage`, {
         method: 'POST',
         headers: {
@@ -127,22 +109,14 @@ class StripeService {
         body: JSON.stringify({ userId })
       })
 
-      console.log('updateUsageCount: response status:', response.status)
-
       if (response.status === 403) {
         const errorData = await response.json()
-        console.log('Usage limit exceeded:', errorData)
         throw new Error('Usage limit exceeded')
       }
 
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error('updateUsageCount: Error response:', errorText)
-        throw new Error(`Error updating usage count: ${response.status} - ${errorText}`)
+        throw new Error('Error updating usage count')
       }
-
-      const result = await response.json()
-      console.log('updateUsageCount: success:', result)
     } catch (error) {
       console.error('Error updating usage count:', error)
       throw error

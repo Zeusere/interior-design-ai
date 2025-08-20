@@ -38,47 +38,33 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   // Cargar estado de suscripción cuando el usuario se autentica
   useEffect(() => {
     if (user?.id) {
-      console.log('🔑 User authenticated:', { 
-        id: user.id, 
-        email: user.email,
-        user_metadata: user.user_metadata 
-      })
       loadSubscriptionStatus()
     } else {
-      console.log('❌ No user authenticated')
       setSubscriptionStatus(null)
       setIsLoading(false)
     }
   }, [user?.id])
 
   const loadSubscriptionStatus = async () => {
-    if (!user?.id) {
-      console.log('loadSubscriptionStatus: No user ID, skipping')
-      return
-    }
+    if (!user?.id) return
 
-    console.log('loadSubscriptionStatus: Loading for user', user.id)
     try {
       setIsLoading(true)
       setError(null)
       const status = await stripeService.getSubscriptionStatus(user.id)
-      console.log('loadSubscriptionStatus: Loaded status:', status)
       setSubscriptionStatus(status)
     } catch (err) {
       console.error('Error loading subscription status:', err)
       setError(err instanceof Error ? err.message : 'Error desconocido')
       // Set default free status if error
-      const defaultStatus = {
+      setSubscriptionStatus({
         isActive: false,
         plan: 'free' as const,
         usageCount: 0,
         maxUsage: 5
-      }
-      console.log('loadSubscriptionStatus: Setting default status due to error:', defaultStatus)
-      setSubscriptionStatus(defaultStatus)
+      })
     } finally {
       setIsLoading(false)
-      console.log('loadSubscriptionStatus: Finished loading')
     }
   }
 
@@ -102,29 +88,21 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
 
   const incrementUsage = async (): Promise<boolean> => {
     if (!user?.id) {
-      console.log('incrementUsage: No user ID')
       return false
     }
-
-    console.log('incrementUsage: Starting for user', user.id)
-    console.log('Current subscription status:', subscriptionStatus)
 
     try {
       // Si es usuario Pro, permitir uso sin incrementar contador
       if (subscriptionStatus?.isActive && stripeService.isProPlan(subscriptionStatus.plan)) {
-        console.log('User is Pro, allowing unlimited usage')
         return true
       }
 
-      console.log('Attempting to increment usage count via API')
       // Para usuarios gratuitos, intentar incrementar contador (el backend verifica límites)
       await stripeService.updateUsageCount(user.id)
       
       // Recargar estado después del incremento exitoso
-      console.log('Reloading subscription status after successful increment')
       await loadSubscriptionStatus()
       
-      console.log('Usage increment successful')
       return true
       
     } catch (err) {
@@ -132,7 +110,6 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       
       // Si el error es por límite alcanzado, mostrar modal
       if (err instanceof Error && (err.message.includes('Usage limit exceeded') || err.message.includes('403'))) {
-        console.log('Usage limit reached, showing upgrade modal')
         setUpgradeToProModal(true)
         return false
       }

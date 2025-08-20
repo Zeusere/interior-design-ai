@@ -1,10 +1,6 @@
 const { createClient } = require('@supabase/supabase-js')
 
-// Debug environment variables
-console.log('Environment check:', {
-  SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'MISSING',
-  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING'
-})
+
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -12,8 +8,6 @@ const supabase = createClient(
 )
 
 module.exports = async (req, res) => {
-  console.log('update-usage: Received request', { method: req.method, body: req.body })
-  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -22,24 +16,17 @@ module.exports = async (req, res) => {
     const { userId } = req.body
 
     if (!userId) {
-      console.log('update-usage: Missing userId')
       return res.status(400).json({ error: 'User ID is required' })
     }
 
-    console.log('update-usage: Processing for userId:', userId)
-
     // Obtener información actual del usuario
-    console.log('update-usage: Fetching subscription for user:', userId)
     const { data: subscription, error: fetchError } = await supabase
       .from('user_subscriptions')
       .select('*')
       .eq('user_id', userId)
       .single()
 
-    console.log('update-usage: Fetch result:', { subscription, error: fetchError })
-
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.log('update-usage: Database error:', fetchError)
       throw fetchError
     }
 
