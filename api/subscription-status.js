@@ -1,11 +1,19 @@
 const { createClient } = require('@supabase/supabase-js')
 
+// Debug environment variables
+console.log('subscription-status Environment check:', {
+  SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'MISSING',
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING'
+})
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
 module.exports = async (req, res) => {
+  console.log('subscription-status: Received request', { method: req.method, query: req.query })
+  
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -14,8 +22,11 @@ module.exports = async (req, res) => {
     const { userId } = req.query
 
     if (!userId) {
+      console.log('subscription-status: Missing userId')
       return res.status(400).json({ error: 'User ID is required' })
     }
+
+    console.log('subscription-status: Processing for userId:', userId)
 
     // Obtener información de suscripción del usuario
     const { data: subscription, error } = await supabase
