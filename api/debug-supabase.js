@@ -4,7 +4,7 @@ module.exports = async (req, res) => {
   try {
     console.log('=== SUPABASE DEBUG START ===')
     
-    // 1. Verificar variables de entorno
+    // 1. Verificar variables de entornooo
     const envCheck = {
       SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'MISSING',
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING',
@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return res.status(500).json({
         success: false,
-        error: 'Missing Supabase environment variables',
+        error: 'Missing Supabase environment variabless',
         details: envCheck
       })
     }
