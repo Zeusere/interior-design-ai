@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
   plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'monthly', 'yearly')),
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'canceled', 'past_due', 'incomplete')),
   usage_count INTEGER DEFAULT 0,
-  max_usage INTEGER DEFAULT 1, -- -1 para ilimitado
+  max_usage INTEGER DEFAULT 5, -- -1 para ilimitado
   current_period_end TIMESTAMPTZ,
   cancel_at_period_end BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -78,7 +78,7 @@ BEGIN
     END as is_active,
     us.plan,
     COALESCE(us.usage_count, 0) as usage_count,
-    COALESCE(us.max_usage, CASE WHEN us.plan = 'free' THEN 1 ELSE -1 END) as max_usage,
+    COALESCE(us.max_usage, CASE WHEN us.plan = 'free' THEN 5 ELSE -1 END) as max_usage,
     us.current_period_end,
     COALESCE(us.cancel_at_period_end, FALSE) as cancel_at_period_end
   FROM user_subscriptions us
@@ -125,9 +125,9 @@ BEGIN
   -- Si no existe, crear registro por defecto
   IF NOT FOUND THEN
     INSERT INTO user_subscriptions (user_id, plan, usage_count, max_usage)
-    VALUES (p_user_id, 'free', 1, 1);
+    VALUES (p_user_id, 'free', 1, 5);
     
-    RETURN QUERY SELECT TRUE, 1, 1, TRUE;
+    RETURN QUERY SELECT TRUE, 1, 5, FALSE;
     RETURN;
   END IF;
   

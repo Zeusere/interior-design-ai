@@ -6,6 +6,7 @@ import LandingPage from './pages/LandingPage.tsx'
 import DesignApp from './pages/DesignApp.tsx'
 import Dashboard from './pages/Dashboard.tsx'
 import ProjectDetail from './pages/ProjectDetail.tsx'
+import PricingPage from './pages/PricingPage.tsx'
 import Help from './pages/Help.tsx'
 import AuthCallback from './pages/AuthCallback.tsx'
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -48,6 +49,10 @@ function App() {
             <Route 
               path="/help" 
               element={<Help />}
+            />
+            <Route 
+              path="/pricing" 
+              element={<PricingPage />}
             />
           </Routes>
           </div>

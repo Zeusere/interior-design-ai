@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
           user_id: userId,
           plan: 'free',
           usage_count: 1,
-          max_usage: 1,
+          max_usage: 5,
           status: 'active',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
 
     // Si es usuario gratuito, verificar límite
     const currentUsage = subscription.usage_count || 0
-    const maxUsage = subscription.max_usage || 1
+    const maxUsage = subscription.max_usage || 5
 
     if (currentUsage >= maxUsage) {
       return res.status(403).json({ 

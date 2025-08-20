@@ -61,7 +61,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
         isActive: false,
         plan: 'free',
         usageCount: 0,
-        maxUsage: 1
+        maxUsage: 5
       })
     } finally {
       setIsLoading(false)
@@ -187,7 +187,7 @@ export const useUsageInfo = () => {
   const { subscriptionStatus } = useSubscription()
   
   if (!subscriptionStatus) {
-    return { current: 0, max: 1, percentage: 0 }
+    return { current: 0, max: 5, percentage: 0 }
   }
   
   const current = subscriptionStatus.usageCount

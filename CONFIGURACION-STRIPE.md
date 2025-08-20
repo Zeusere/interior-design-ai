@@ -4,7 +4,7 @@
 
 Has implementado un sistema completo de suscripciones que incluye:
 
-- ✅ **Plan Gratuito**: 1 generación única
+- ✅ **Plan Gratuito**: 5 generaciones gratuitas
 - ✅ **Plan Pro Mensual**: $19/mes - Generaciones ilimitadas  
 - ✅ **Plan Pro Anual**: $149/año (34% descuento) - Generaciones ilimitadas
 - ✅ **Modal de upgrade automático** cuando se alcanza el límite
@@ -104,8 +104,8 @@ Las siguientes rutas deben estar disponibles en tu backend:
 ## 🎯 Flujo de Usuario Completo
 
 ### Usuario Nuevo (Gratuito)
-1. Se registra → Obtiene 1 generación gratuita
-2. Usa su generación → Se muestra progreso (1/1)
+1. Se registra → Obtiene 5 generaciones gratuitas
+2. Usa sus generaciones → Se muestra progreso (1/5, 2/5, etc.)
 3. Intenta generar otra → Modal de upgrade automático
 4. Selecciona plan → Redirect a Stripe Checkout
 5. Completa pago → Se convierte en Pro con generaciones ilimitadas
@@ -129,8 +129,8 @@ Las siguientes rutas deben estar disponibles en tu backend:
 ```
 
 ### Flujo de Pruebas
-1. **Crear usuario gratuito** → Verificar límite de 1 uso
-2. **Intentar segunda generación** → Debe mostrar modal de upgrade
+1. **Crear usuario gratuito** → Verificar límite de 5 usos
+2. **Usar las 5 generaciones** → Al intentar la 6ta debe mostrar modal de upgrade
 3. **Completar compra con tarjeta de prueba** → Verificar que se activa Pro
 4. **Generar múltiples diseños** → Verificar uso ilimitado
 5. **Webhook testing** → Usar Stripe CLI o herramientas de testing

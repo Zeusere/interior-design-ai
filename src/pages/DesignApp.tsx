@@ -55,7 +55,7 @@ function DesignApp() {
         // Verificar límite de uso antes de procesar cada imagen
         const canUse = await incrementUsage()
         if (!canUse) {
-          setErrorMessage('Has alcanzado el límite de generaciones gratuitas. Upgrade a Pro para continuar.')
+          setErrorMessage('Has alcanzado el límite de 5 generaciones gratuitas. Upgrade a Pro para continuar.')
           break
         }
 
@@ -108,7 +108,7 @@ function DesignApp() {
       // Verificar límite de uso antes de procesar
       const canUse = await incrementUsage()
       if (!canUse) {
-        setErrorMessage('Has alcanzado el límite de generaciones gratuitas. Upgrade a Pro para continuar.')
+        setErrorMessage('Has alcanzado el límite de 5 generaciones gratuitas. Upgrade a Pro para continuar.')
         return
       }
 
@@ -322,7 +322,7 @@ function DesignApp() {
         onClose={() => setUpgradeToProModal(false)}
         onSelectPlan={handleUpgrade}
         currentUsage={subscriptionStatus?.usageCount || 0}
-        maxFreeUsage={subscriptionStatus?.maxUsage || 1}
+        maxFreeUsage={subscriptionStatus?.maxUsage || 5}
       />
     </main>
   )

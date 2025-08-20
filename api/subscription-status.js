@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
           user_id: userId,
           plan: 'free',
           usage_count: 0,
-          max_usage: 1,
+          max_usage: 5,
           status: 'active',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
         isActive: false,
         plan: 'free',
         usageCount: 0,
-        maxUsage: 1,
+        maxUsage: 5,
         currentPeriodEnd: null,
         cancelAtPeriodEnd: false
       })
@@ -63,7 +63,7 @@ module.exports = async (req, res) => {
       isActive: isActive,
       plan: subscription.plan,
       usageCount: subscription.usage_count || 0,
-      maxUsage: subscription.max_usage || (subscription.plan === 'free' ? 1 : -1),
+      maxUsage: subscription.max_usage || (subscription.plan === 'free' ? 5 : -1),
       currentPeriodEnd: subscription.current_period_end,
       cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
       status: subscription.status

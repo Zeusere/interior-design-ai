@@ -13,9 +13,13 @@ import {
   ImageIcon,
   FolderOpen,
   ArrowRight,
-  Palette
+  Palette,
+  Crown,
+  Zap,
+  Star
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { useSubscription, useIsProUser, useUsageInfo } from '../contexts/SubscriptionContext'
 import { supabase } from '../lib/supabase'
 import SEO from '../components/SEO'
 
@@ -42,6 +46,9 @@ interface ProjectImage {
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const { setUpgradeToProModal } = useSubscription()
+  const isProUser = useIsProUser()
+  const { current, max, percentage } = useUsageInfo()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -294,6 +301,100 @@ export default function Dashboard() {
                 </div>
               </motion.div>
             </div>
+          )}
+
+          {/* Sección Pro Upgrade */}
+          {!isProUser && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 mb-8 text-white relative overflow-hidden"
+            >
+              {/* Background decoration */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 to-blue-600/90" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12" />
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Crown className="w-8 h-8 text-yellow-300" />
+                      <h2 className="text-2xl font-bold">¡Upgrade a Pro!</h2>
+                    </div>
+                    
+                    <p className="text-blue-100 mb-6 text-lg">
+                      Desbloquea generaciones ilimitadas y lleva tus diseños al siguiente nivel
+                    </p>
+
+                    {/* Progress Bar */}
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-blue-100">Uso actual</span>
+                        <span className="font-bold">{current}/{max}</span>
+                      </div>
+                      <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-yellow-400 to-orange-400 transition-all duration-500"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                      {current >= max && (
+                        <p className="text-yellow-200 text-sm mt-2">
+                          🚀 Has alcanzado el límite. ¡Upgrade para continuar!
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Benefits */}
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-5 h-5 text-yellow-300" />
+                        <span className="text-blue-100">Generaciones ilimitadas</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <FolderOpen className="w-5 h-5 text-yellow-300" />
+                        <span className="text-blue-100">Proyectos ilimitados</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-yellow-300" />
+                        <span className="text-blue-100">Sin marca de agua</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Star className="w-5 h-5 text-yellow-300" />
+                        <span className="text-blue-100">Soporte prioritario</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => setUpgradeToProModal(true)}
+                        className="bg-white text-purple-600 px-6 py-3 rounded-lg font-bold hover:bg-blue-50 transition-colors flex items-center gap-2"
+                      >
+                        <Crown className="w-5 h-5" />
+                        Hazte Pro Ahora
+                      </button>
+                      
+                      <Link 
+                        to="/pricing"
+                        className="border border-white/30 text-white px-6 py-3 rounded-lg font-medium hover:bg-white/10 transition-colors flex items-center gap-2"
+                      >
+                        Ver Precios
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Decorative element */}
+                  <div className="hidden lg:block">
+                    <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center">
+                      <Crown className="w-16 h-16 text-yellow-300" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           )}
         </motion.div>
 

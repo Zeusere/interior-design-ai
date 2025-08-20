@@ -15,7 +15,7 @@ const PricingModal = ({
   onClose, 
   onSelectPlan,
   currentUsage = 1,
-  maxFreeUsage = 1
+  maxFreeUsage = 5
 }: PricingModalProps) => {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly')
 
@@ -26,13 +26,13 @@ const PricingModal = ({
       period: 'Para siempre',
       description: 'Perfecto para probar la herramienta',
       features: [
-        '1 generación única',
+        '5 generaciones gratuitas',
         'Todas las opciones de diseño',
         'Calidad HD',
         'Soporte por email'
       ],
       limitations: [
-        'Solo 1 uso total',
+        'Máximo 5 generaciones',
         'No guardar proyectos'
       ]
     },
@@ -85,12 +85,16 @@ const PricingModal = ({
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                  <Crown className="w-6 h-6 text-purple-600" />
-                  Upgrade a Pro
+                <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+                  <Crown className="w-8 h-8 text-purple-600" />
+                  ¡Desbloqueá tu Creatividad!
                 </h2>
-                <p className="text-gray-600 mt-1">
-                  Has usado {currentUsage} de {maxFreeUsage} generaciones gratuitas
+                <p className="text-gray-600 mt-2 text-lg">
+                  Has usado {currentUsage} de {maxFreeUsage} generaciones gratuitas. 
+                  {currentUsage >= maxFreeUsage ? 
+                    " 🚀 ¡Upgrade para seguir diseñando sin límites!" : 
+                    ` Te quedan ${maxFreeUsage - currentUsage} generaciones.`
+                  }
                 </p>
               </div>
               <button
@@ -104,18 +108,29 @@ const PricingModal = ({
 
           {/* Progress bar */}
           <div className="px-6 pt-4">
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 rounded-full h-3">
               <div 
-                className="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-500"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 h-3 rounded-full transition-all duration-500"
                 style={{ width: `${(currentUsage / maxFreeUsage) * 100}%` }}
               />
             </div>
-            <p className="text-sm text-gray-500 mt-2">
-              {currentUsage >= maxFreeUsage 
-                ? '🚀 ¡Has alcanzado el límite! Upgrade para continuar'
-                : `${maxFreeUsage - currentUsage} generaciones restantes`
-              }
-            </p>
+            
+            {currentUsage >= maxFreeUsage ? (
+              <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white p-4 rounded-lg mt-4">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-5 h-5" />
+                  <span className="font-bold">¡Límite Alcanzado!</span>
+                </div>
+                <p className="text-sm mt-1">
+                  Para continuar creando diseños increíbles, necesitas una cuenta Pro. 
+                  ¡Upgrade ahora y obtén acceso inmediato!
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 mt-2">
+                Te quedan {maxFreeUsage - currentUsage} generaciones gratuitas
+              </p>
+            )}
           </div>
 
           {/* Toggle anual/mensual */}

@@ -75,7 +75,7 @@ class StripeService {
         isActive: false,
         plan: 'free',
         usageCount: 0,
-        maxUsage: 1
+        maxUsage: 5
       }
     }
   }
