@@ -70,7 +70,7 @@ class StripeService {
   async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
     try {
       console.log('getSubscriptionStatus: fetching for userId:', userId)
-      const response = await fetch(`${this.baseUrl}/api/subscription-status-simple?userId=${userId}`)
+      const response = await fetch(`${this.baseUrl}/api/subscription-status?userId=${userId}`)
       
       console.log('getSubscriptionStatus: response status:', response.status)
       

@@ -57,7 +57,7 @@ const PricingPage = () => {
     },
     monthly: {
       name: 'Pro Mensual',
-      price: 19,
+      price: 19.49,
       period: 'por mes',
       description: 'Para diseñadores que necesitan flexibilidad',
       badge: null,
@@ -72,7 +72,7 @@ const PricingPage = () => {
     },
     yearly: {
       name: 'Pro Anual',
-      price: 149,
+      price: 139,
       originalPrice: 228,
       period: 'por año',
       description: 'El favorito de los profesionales',

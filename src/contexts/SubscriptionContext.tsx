@@ -38,8 +38,14 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   // Cargar estado de suscripción cuando el usuario se autentica
   useEffect(() => {
     if (user?.id) {
+      console.log('🔑 User authenticated:', { 
+        id: user.id, 
+        email: user.email,
+        user_metadata: user.user_metadata 
+      })
       loadSubscriptionStatus()
     } else {
+      console.log('❌ No user authenticated')
       setSubscriptionStatus(null)
       setIsLoading(false)
     }

@@ -1,4 +1,4 @@
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   try {
     // Test básico de variables de entorno
     const envCheck = {
@@ -10,8 +10,17 @@ module.exports = async (req, res) => {
 
     console.log('Environment check:', envCheck)
 
+    // Verificar que las variables críticas existan antes de usar Supabase
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+      return res.status(500).json({
+        success: false,
+        error: 'Missing critical environment variables',
+        environment: envCheck
+      })
+    }
+
     // Test de conexión a Supabase sin service role
-    const { createClient } = require('@supabase/supabase-js')
+    const { createClient } = await import('@supabase/supabase-js')
     
     const supabaseWithAnon = createClient(
       process.env.SUPABASE_URL,
