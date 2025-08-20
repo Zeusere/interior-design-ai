@@ -1,0 +1,95 @@
+const { createClient } = require('@supabase/supabase-js')
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
+
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  try {
+    const { userId } = req.body
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' })
+    }
+
+    // Obtener información actual del usuario
+    const { data: subscription, error: fetchError } = await supabase
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      throw fetchError
+    }
+
+    // Si no existe registro, crear uno por defecto
+    if (!subscription) {
+      await supabase
+        .from('user_subscriptions')
+        .insert({
+          user_id: userId,
+          plan: 'free',
+          usage_count: 1,
+          max_usage: 1,
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+
+      return res.status(200).json({ success: true, usageCount: 1 })
+    }
+
+    // Verificar si puede usar la función
+    const isProUser = subscription.plan === 'monthly' || subscription.plan === 'yearly'
+    const hasActiveSubscription = subscription.status === 'active'
+
+    // Si es usuario Pro con suscripción activa, no incrementar contador (uso ilimitado)
+    if (isProUser && hasActiveSubscription) {
+      return res.status(200).json({ success: true, usageCount: subscription.usage_count })
+    }
+
+    // Si es usuario gratuito, verificar límite
+    const currentUsage = subscription.usage_count || 0
+    const maxUsage = subscription.max_usage || 1
+
+    if (currentUsage >= maxUsage) {
+      return res.status(403).json({ 
+        error: 'Usage limit exceeded', 
+        usageCount: currentUsage,
+        maxUsage: maxUsage
+      })
+    }
+
+    // Incrementar contador de uso
+    const newUsageCount = currentUsage + 1
+    
+    const { error: updateError } = await supabase
+      .from('user_subscriptions')
+      .update({
+        usage_count: newUsageCount,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId)
+
+    if (updateError) {
+      throw updateError
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      usageCount: newUsageCount,
+      maxUsage: maxUsage,
+      limitReached: newUsageCount >= maxUsage
+    })
+
+  } catch (error) {
+    console.error('Error updating usage:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+}

@@ -3,16 +3,26 @@ import ImageUpload, { type UploadedImageInfo } from '../components/ImageUpload.t
 import EditingOptions from '../components/EditingOptions.tsx'
 import ResultsGallery from '../components/ResultsGallery.tsx'
 import SaveProjectModal from '../components/SaveProjectModal.tsx'
+import PricingModal from '../components/PricingModal.tsx'
 import SEO from '../components/SEO'
 import { motion } from 'framer-motion'
 import { aiService } from '../services/aiService.ts'
 import { BackendService } from '../services/backendService.ts'
 import { useAuth } from '../contexts/AuthContext'
+import { useSubscription } from '../contexts/SubscriptionContext'
 import { supabase } from '../lib/supabase'
 import type { DesignOptions, ProcessedImage } from '../types'
 
 function DesignApp() {
   const { user } = useAuth()
+  const { 
+    subscriptionStatus, 
+    incrementUsage, 
+    upgradeToProModal, 
+    setUpgradeToProModal, 
+    handleUpgrade 
+  } = useSubscription()
+  
   const [designOptions, setDesignOptions] = useState<DesignOptions>({
     style: 'modern',
     architecture: 'contemporary',
@@ -42,6 +52,13 @@ function DesignApp() {
     try {
       // Procesar cada imagen con su tipo de habitación específico
       for (const image of images) {
+        // Verificar límite de uso antes de procesar cada imagen
+        const canUse = await incrementUsage()
+        if (!canUse) {
+          setErrorMessage('Has alcanzado el límite de generaciones gratuitas. Upgrade a Pro para continuar.')
+          break
+        }
+
         const imageDesignOptions = { ...designOptions, roomType: image.roomType }
         
         try {
@@ -88,6 +105,13 @@ function DesignApp() {
     setErrorMessage(null)
     
     try {
+      // Verificar límite de uso antes de procesar
+      const canUse = await incrementUsage()
+      if (!canUse) {
+        setErrorMessage('Has alcanzado el límite de generaciones gratuitas. Upgrade a Pro para continuar.')
+        return
+      }
+
       const imageDesignOptions = { ...designOptions, roomType: image.roomType }
       const processedImageUrl = await aiService.generateDesign(image.url, imageDesignOptions)
       
@@ -290,6 +314,15 @@ function DesignApp() {
         onClose={() => setShowSaveModal(false)}
         onSave={handleConfirmSave}
         isLoading={isSaving}
+      />
+
+      {/* Modal de upgrade a Pro */}
+      <PricingModal
+        isOpen={upgradeToProModal}
+        onClose={() => setUpgradeToProModal(false)}
+        onSelectPlan={handleUpgrade}
+        currentUsage={subscriptionStatus?.usageCount || 0}
+        maxFreeUsage={subscriptionStatus?.maxUsage || 1}
       />
     </main>
   )
