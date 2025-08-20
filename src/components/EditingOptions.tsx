@@ -6,10 +6,9 @@ interface EditingOptionsProps {
   options: DesignOptions
   onChange: (options: DesignOptions) => void
   disabled?: boolean
-  multiMode?: boolean
 }
 
-const EditingOptions = ({ options, onChange, disabled, multiMode }: EditingOptionsProps) => {
+const EditingOptions = ({ options, onChange, disabled }: EditingOptionsProps) => {
   const handleOptionChange = (key: keyof DesignOptions, value: string) => {
     onChange({ ...options, [key]: value })
   }
@@ -64,19 +63,6 @@ const EditingOptions = ({ options, onChange, disabled, multiMode }: EditingOptio
         { value: 'pastel', label: 'Pastel', description: 'Suaves y delicados' },
         { value: 'jewel', label: 'Joya', description: 'Ricos y profundos' }
       ]
-    },
-    {
-      title: 'Tipo de Habitación',
-      icon: <Home className="w-5 h-5" />,
-      key: 'roomType' as keyof DesignOptions,
-      options: [
-        { value: 'living-room', label: 'Sala de Estar', description: 'Área principal' },
-        { value: 'bedroom', label: 'Dormitorio', description: 'Espacio de descanso' },
-        { value: 'kitchen', label: 'Cocina', description: 'Área culinaria' },
-        { value: 'dining-room', label: 'Comedor', description: 'Zona de comidas' },
-        { value: 'bathroom', label: 'Baño', description: 'Espacio de aseo' },
-        { value: 'office', label: 'Oficina', description: 'Área de trabajo' }
-      ]
     }
   ]
 
@@ -96,31 +82,24 @@ const EditingOptions = ({ options, onChange, disabled, multiMode }: EditingOptio
             transition={{ duration: 0.3, delay: groupIndex * 0.1 }}
             className="space-y-3"
           >
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
-                {group.icon}
-                {group.title}
-              </h3>
-              {multiMode && group.key === 'roomType' && (
-                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
-                  Se configura por imagen
-                </span>
-              )}
-            </div>
+            <h3 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
+              {group.icon}
+              {group.title}
+            </h3>
             
             <div className="grid grid-cols-1 gap-2">
               {group.options.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => handleOptionChange(group.key, option.value)}
-                  disabled={disabled || (multiMode && group.key === 'roomType')}
+                  disabled={disabled}
                   className={`
                     p-3 rounded-lg text-left transition-all duration-200 border-2
                     ${options[group.key] === option.value
                       ? 'border-purple-500 bg-purple-50 shadow-md'
                       : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
                     }
-                    ${(disabled || (multiMode && group.key === 'roomType')) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                   `}
                 >
                   <div className="font-medium text-gray-800">{option.label}</div>

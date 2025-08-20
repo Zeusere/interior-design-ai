@@ -13,14 +13,18 @@ export interface UploadedImageInfo {
 
 interface ImageUploadProps {
   onMultipleImagesUpload: (images: UploadedImageInfo[]) => void
+  onSingleImageProcess?: (image: UploadedImageInfo) => void
   isProcessing: boolean
   onImageEnhance?: (imageUrl: string) => void
+  processedImageIds?: Set<string>
 }
 
 const ImageUpload = ({ 
   onMultipleImagesUpload,
+  onSingleImageProcess,
   isProcessing,
-  onImageEnhance
+  onImageEnhance,
+  processedImageIds = new Set()
 }: ImageUploadProps) => {
   const [dragActive, setDragActive] = useState(false)
   const [localImages, setLocalImages] = useState<UploadedImageInfo[]>([])
@@ -89,7 +93,14 @@ const ImageUpload = ({
   }
 
   const handleProcessMultiple = () => {
-    onMultipleImagesUpload(localImages)
+    const unprocessedImages = localImages.filter(img => !processedImageIds.has(img.id))
+    onMultipleImagesUpload(unprocessedImages)
+  }
+
+  const handleProcessSingle = (image: UploadedImageInfo) => {
+    if (onSingleImageProcess) {
+      onSingleImageProcess(image)
+    }
   }
 
   const handleEnhanceImage = (imageUrl: string) => {
@@ -173,6 +184,11 @@ const ImageUpload = ({
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium text-gray-700">Imagen {index + 1}</h4>
                     <div className="flex items-center gap-2">
+                      {processedImageIds.has(image.id) && (
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                          ✓ Procesada
+                        </span>
+                      )}
                       {onImageEnhance && (
                         <button
                           onClick={() => handleEnhanceImage(image.url)}
@@ -207,10 +223,32 @@ const ImageUpload = ({
                           {room.label}
                         </option>
                       ))}
-                    </select>
+                                          </select>
+                    </div>
+                    
+                    {onSingleImageProcess && (
+                      <button
+                        onClick={() => handleProcessSingle(image)}
+                        disabled={isProcessing || processedImageIds.has(image.id)}
+                        className="w-full py-2 px-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Procesando...
+                          </>
+                        ) : processedImageIds.has(image.id) ? (
+                          '✓ Ya procesada'
+                        ) : (
+                          <>
+                            <Wand2 className="w-4 h-4" />
+                            Generar Diseño
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
-              </div>
             </motion.div>
           ))}
         </AnimatePresence>
@@ -241,25 +279,34 @@ const ImageUpload = ({
               Limpiar todo
             </button>
             
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleProcessMultiple}
-              disabled={isProcessing}
-              className="flex-2 py-3 px-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Procesando {localImages.length} imágenes...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="w-5 h-5" />
-                  Generar {localImages.length} Diseños
-                </>
-              )}
-            </motion.button>
+            {(() => {
+              const unprocessedImages = localImages.filter(img => !processedImageIds.has(img.id))
+              const allProcessed = unprocessedImages.length === 0
+              
+              return (
+                <motion.button
+                  whileHover={{ scale: allProcessed ? 1 : 1.05 }}
+                  whileTap={{ scale: allProcessed ? 1 : 0.95 }}
+                  onClick={handleProcessMultiple}
+                  disabled={isProcessing || allProcessed}
+                  className="flex-2 py-3 px-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Procesando {unprocessedImages.length} imágenes...
+                    </>
+                  ) : allProcessed ? (
+                    '✓ Todas procesadas'
+                  ) : (
+                    <>
+                      <Wand2 className="w-5 h-5" />
+                      Generar {unprocessedImages.length} Diseños Restantes
+                    </>
+                  )}
+                </motion.button>
+              )
+            })()}
           </div>
         )}
       </div>

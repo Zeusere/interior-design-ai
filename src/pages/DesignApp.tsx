@@ -24,6 +24,7 @@ function DesignApp() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [uploadedImages, setUploadedImages] = useState<UploadedImageInfo[]>([])
+  const [processedImageIds, setProcessedImageIds] = useState<Set<string>>(new Set())
   
   // Estado para guardar proyecto
   const [showSaveModal, setShowSaveModal] = useState(false)
@@ -32,7 +33,11 @@ function DesignApp() {
   const handleMultipleImagesUpload = async (images: UploadedImageInfo[]) => {
     setIsProcessing(true)
     setErrorMessage(null)
-    setUploadedImages(images) // Actualizar el estado de imágenes subidas
+    
+    // Si es la primera vez que se llama, actualizar las imágenes subidas
+    if (uploadedImages.length === 0) {
+      setUploadedImages(images)
+    }
     
     try {
       // Procesar cada imagen con su tipo de habitación específico
@@ -52,6 +57,7 @@ function DesignApp() {
           }
           
           setProcessedImages(prev => [newProcessedImage, ...prev])
+          setProcessedImageIds(prev => new Set([...prev, image.id]))
         } catch (error) {
           console.error('Error al procesar imagen múltiple:', error)
           const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
@@ -72,6 +78,46 @@ function DesignApp() {
     } catch (error) {
       console.error('Error general al procesar múltiples imágenes:', error)
       setErrorMessage(error instanceof Error ? error.message : 'Error desconocido')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleSingleImageProcess = async (image: UploadedImageInfo) => {
+    setIsProcessing(true)
+    setErrorMessage(null)
+    
+    try {
+      const imageDesignOptions = { ...designOptions, roomType: image.roomType }
+      const processedImageUrl = await aiService.generateDesign(image.url, imageDesignOptions)
+      
+      const newProcessedImage: ProcessedImage = {
+        id: Date.now().toString() + Math.random().toString(),
+        originalUrl: image.url,
+        processedUrl: processedImageUrl,
+        options: imageDesignOptions,
+        timestamp: new Date(),
+        status: 'completed'
+      }
+      
+      setProcessedImages(prev => [newProcessedImage, ...prev])
+      setProcessedImageIds(prev => new Set([...prev, image.id]))
+    } catch (error) {
+      console.error('Error al procesar imagen individual:', error)
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      setErrorMessage(`Error al procesar la imagen: ${errorMsg}`)
+      
+      const newProcessedImage: ProcessedImage = {
+        id: Date.now().toString() + Math.random().toString(),
+        originalUrl: image.url,
+        processedUrl: image.url,
+        options: { ...designOptions, roomType: image.roomType },
+        timestamp: new Date(),
+        status: 'error',
+        error: errorMsg
+      }
+      
+      setProcessedImages(prev => [newProcessedImage, ...prev])
     } finally {
       setIsProcessing(false)
     }
@@ -178,8 +224,7 @@ function DesignApp() {
           <EditingOptions 
             options={designOptions}
             onChange={setDesignOptions}
-            disabled={isProcessing || uploadedImages.length === 0}
-            multiMode={true}
+            disabled={isProcessing}
           />
         </motion.div>
 
@@ -194,8 +239,10 @@ function DesignApp() {
             {/* Upload de imagen - PRIMERO en móvil */}
             <ImageUpload 
               onMultipleImagesUpload={handleMultipleImagesUpload}
+              onSingleImageProcess={handleSingleImageProcess}
               isProcessing={isProcessing}
               onImageEnhance={handleImageEnhance}
+              processedImageIds={processedImageIds}
             />
 
             {/* Mensaje de error */}
