@@ -34,6 +34,7 @@ module.exports = async (req, res) => {
     const { planType, userId, userEmail, successUrl, cancelUrl } = req.body
 
     console.log('stripe-checkout: Processing request', { planType, userId, userEmail })
+    console.log('stripe-checkout: Available PRICE_IDS:', PRICE_IDS)
 
     if (!planType || !userId || !userEmail) {
       console.log('stripe-checkout: Missing required fields')
@@ -45,6 +46,14 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Invalid plan type' })
     }
 
+    // Test básico - devolver sessionId falso por ahora
+    console.log('stripe-checkout: Would create session for:', planType, 'with price:', PRICE_IDS[planType])
+    
+    return res.status(200).json({
+      sessionId: 'test_session_id_12345'
+    })
+
+    /* TODO: Resto del código de Stripe - comentado temporalmente
     // Verificar si el usuario ya existe en la base de datos
     const { data: existingUser } = await supabase
       .from('user_subscriptions')
@@ -103,7 +112,8 @@ module.exports = async (req, res) => {
       },
     })
 
-    res.status(200).json({ sessionId: session.id })
+    // res.status(200).json({ sessionId: session.id })
+    */
   } catch (error) {
     console.error('Error creating checkout session:', error)
     res.status(500).json({ error: 'Internal server error' })
