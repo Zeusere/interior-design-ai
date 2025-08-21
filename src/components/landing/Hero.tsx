@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Sparkles, ArrowRight, Play } from 'lucide-react'
 
+
 function Hero() {
   return (
     <section className="relative overflow-hidden py-20 lg:py-32">

@@ -13,7 +13,7 @@ import { useSubscription } from '../contexts/SubscriptionContext'
 import { supabase } from '../lib/supabase'
 import type { DesignOptions, ProcessedImage } from '../types'
 
-function DesignApp() {
+function DesignApp() { // Deploy test
   const { user } = useAuth()
   const { 
     subscriptionStatus, 
