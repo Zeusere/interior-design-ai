@@ -163,6 +163,10 @@ export default async function handler(req, res) {
       },
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
+      customer_update: {
+        address: 'auto',
+        shipping: 'auto'
+      },
       automatic_tax: {
         enabled: true,
       },
