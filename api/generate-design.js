@@ -123,9 +123,10 @@ async function uploadToSupabase(imagePath) {
     
     console.log('📤 Subiendo archivo como:', fileName);
     
-    // Subir a Supabase Storage
+    // Subir a Supabase Storage - usar temp-images que sabemos que funciona
+    console.log('📤 Intentando subir a bucket temp-images...');
     const { data, error } = await supabase.storage
-      .from('interior-images')
+      .from('temp-images')
       .upload(fileName, processedImageBuffer, {
         contentType: 'image/jpeg',
         cacheControl: '3600',
@@ -134,12 +135,34 @@ async function uploadToSupabase(imagePath) {
     
     if (error) {
       console.error('❌ Error de Supabase:', error);
-      throw new Error(`Error de Supabase: ${error.message}`);
+      
+      // Si es un error de timeout, intentar una vez más
+      if (error.message.includes('timeout') || error.message.includes('fetch failed')) {
+        console.log('🔄 Reintentando subida debido a timeout...');
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Esperar 2 segundos
+        
+        const { data: retryData, error: retryError } = await supabase.storage
+          .from('temp-images')
+          .upload(fileName, processedImageBuffer, {
+            contentType: 'image/jpeg',
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (retryError) {
+          console.error('❌ Error en reintento:', retryError);
+          throw new Error(`Error de Supabase después de reintento: ${retryError.message}`);
+        }
+        
+        console.log('✅ Subida exitosa en reintento');
+      } else {
+        throw new Error(`Error de Supabase: ${error.message}`);
+      }
     }
     
     // Obtener URL pública
     const { data: publicUrlData } = supabase.storage
-      .from('interior-images')
+      .from('temp-images')
       .getPublicUrl(fileName);
     
     const publicUrl = publicUrlData.publicUrl;
