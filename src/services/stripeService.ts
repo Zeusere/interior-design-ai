@@ -22,11 +22,25 @@ export interface SubscriptionStatus {
 }
 
 class StripeService {
-  private baseUrl = import.meta.env.VITE_API_URL || ''
+  private get baseUrl(): string {
+    // Si VITE_API_URL está definido, usarlo
+    if (import.meta.env.VITE_API_URL) {
+      const url = import.meta.env.VITE_API_URL
+      // Eliminar barra final si existe
+      return url.endsWith('/') ? url.slice(0, -1) : url
+    }
+    
+    // Si no, usar la URL actual (mismo dominio)
+    return window.location.origin
+  }
 
   async createCheckoutSession(request: CreateSubscriptionRequest): Promise<string> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/stripe-checkout`, {
+      const url = `${this.baseUrl}/api/stripe-checkout`
+      console.log('Making request to:', url)
+      console.log('Request payload:', request)
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,11 +48,17 @@ class StripeService {
         body: JSON.stringify(request)
       })
       
+      console.log('Response status:', response.status)
+      console.log('Response headers:', response.headers)
+      
       if (!response.ok) {
-        throw new Error('Error creating checkout session')
+        const errorText = await response.text()
+        console.error('Response error:', errorText)
+        throw new Error(`Error creating checkout session: ${response.status} ${errorText}`)
       }
 
       const { sessionId } = await response.json()
+      console.log('Session ID received:', sessionId)
       
       // Redirect to Stripe Checkout
       const stripe = await stripePromise
