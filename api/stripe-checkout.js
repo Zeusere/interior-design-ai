@@ -1,5 +1,5 @@
-const Stripe = require('stripe')
-const { createClient } = require('@supabase/supabase-js')
+import Stripe from 'stripe'
+import { createClient } from '@supabase/supabase-js'
 
 // Configuración
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
@@ -14,7 +14,7 @@ const PRICE_IDS = {
   yearly: process.env.STRIPE_YEARLY_PRICE_ID
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -88,8 +88,8 @@ module.exports = async (req, res) => {
       },
     })
 
-    // res.status(200).json({ sessionId: session.id })
-    */
+    res.status(200).json({ sessionId: session.id })
+    
   } catch (error) {
     console.error('Error creating checkout session:', error)
     res.status(500).json({ error: 'Internal server error' })
