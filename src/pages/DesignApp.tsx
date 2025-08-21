@@ -258,13 +258,14 @@ function DesignApp() {
         >
           <div className="space-y-8">
             {/* Upload de imagen - PRIMERO en móvil */}
-            <ImageUpload 
-              onMultipleImagesUpload={handleMultipleImagesUpload}
-              onSingleImageProcess={handleSingleImageProcess}
-              isProcessing={isProcessing}
-              onImageEnhance={handleImageEnhance}
-              processedImageIds={processedImageIds}
-            />
+                         <ImageUpload 
+               onMultipleImagesUpload={handleMultipleImagesUpload}
+               onSingleImageProcess={handleSingleImageProcess}
+               isProcessing={isProcessing}
+               onImageEnhance={handleImageEnhance}
+               processedImageIds={processedImageIds}
+               onImagesUploaded={setUploadedImages}
+             />
 
             {/* Mensaje de error */}
             {errorMessage && (

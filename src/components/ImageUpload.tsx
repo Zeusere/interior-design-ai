@@ -17,6 +17,7 @@ interface ImageUploadProps {
   isProcessing: boolean
   onImageEnhance?: (imageUrl: string) => void
   processedImageIds?: Set<string>
+  onImagesUploaded?: (images: UploadedImageInfo[]) => void
 }
 
 const ImageUpload = ({ 
@@ -24,7 +25,8 @@ const ImageUpload = ({
   onSingleImageProcess,
   isProcessing,
   onImageEnhance,
-  processedImageIds = new Set()
+  processedImageIds = new Set(),
+  onImagesUploaded
 }: ImageUploadProps) => {
   const [dragActive, setDragActive] = useState(false)
   const [localImages, setLocalImages] = useState<UploadedImageInfo[]>([])
@@ -64,7 +66,9 @@ const ImageUpload = ({
         newImages.push(newImage)
         
         if (newImages.length === filesToProcess.length) {
-          setLocalImages(prev => [...prev, ...newImages])
+          const updatedImages = [...localImages, ...newImages]
+          setLocalImages(updatedImages)
+          onImagesUploaded?.(updatedImages)
         }
       }
       reader.readAsDataURL(file)
@@ -83,13 +87,19 @@ const ImageUpload = ({
   })
 
   const updateRoomType = (imageId: string, roomType: string) => {
-    setLocalImages(prev => 
-      prev.map(img => img.id === imageId ? { ...img, roomType } : img)
-    )
+    setLocalImages(prev => {
+      const updatedImages = prev.map(img => img.id === imageId ? { ...img, roomType } : img)
+      onImagesUploaded?.(updatedImages)
+      return updatedImages
+    })
   }
 
   const removeImage = (imageId: string) => {
-    setLocalImages(prev => prev.filter(img => img.id !== imageId))
+    setLocalImages(prev => {
+      const updatedImages = prev.filter(img => img.id !== imageId)
+      onImagesUploaded?.(updatedImages)
+      return updatedImages
+    })
   }
 
   const handleProcessMultiple = () => {
