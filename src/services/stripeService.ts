@@ -2,6 +2,9 @@ import { loadStripe } from '@stripe/stripe-js'
 
 // Configurar con tu clave pública de Stripe
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY
+console.log('Stripe public key loaded:', stripePublicKey ? 'SET' : 'MISSING')
+console.log('Stripe public key starts with:', stripePublicKey?.substring(0, 7) || 'UNDEFINED')
+
 const stripePromise = loadStripe(stripePublicKey)
 
 export interface CreateSubscriptionRequest {
