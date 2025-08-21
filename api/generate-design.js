@@ -123,10 +123,10 @@ async function uploadToSupabase(imagePath) {
     
     console.log('📤 Subiendo archivo como:', fileName);
     
-    // Subir a Supabase Storage - usar temp-images que sabemos que funciona
-    console.log('📤 Intentando subir a bucket temp-images...');
+    // Subir a Supabase Storage - usar interior-images que sabemos que funciona
+    console.log('📤 Intentando subir a bucket interior-images...');
     const { data, error } = await supabase.storage
-      .from('temp-images')
+      .from('interior-images')
       .upload(fileName, processedImageBuffer, {
         contentType: 'image/jpeg',
         cacheControl: '3600',
@@ -142,7 +142,7 @@ async function uploadToSupabase(imagePath) {
         await new Promise(resolve => setTimeout(resolve, 2000)); // Esperar 2 segundos
         
         const { data: retryData, error: retryError } = await supabase.storage
-          .from('temp-images')
+          .from('interior-images')
           .upload(fileName, processedImageBuffer, {
             contentType: 'image/jpeg',
             cacheControl: '3600',
@@ -162,7 +162,7 @@ async function uploadToSupabase(imagePath) {
     
     // Obtener URL pública
     const { data: publicUrlData } = supabase.storage
-      .from('temp-images')
+      .from('interior-images')
       .getPublicUrl(fileName);
     
     const publicUrl = publicUrlData.publicUrl;
