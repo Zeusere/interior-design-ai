@@ -46,7 +46,7 @@ function Hero() {
             className="text-xl lg:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed"
           >
             Sube una foto de tu espacio y obtén diseños profesionales en segundos. 
-            Sin arquitectos costosos, sin esperas largas. Solo resultados increíbles.
+            Sin arquitectos costosos, sin largas esperas. Solo resultados increibles.
           </motion.p>
 
           <motion.div
