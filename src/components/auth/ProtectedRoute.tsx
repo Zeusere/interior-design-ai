@@ -1,5 +1,6 @@
 import React from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useSubscription } from '../../contexts/SubscriptionContext'
 import AuthModal from './AuthModal'
 
 interface ProtectedRouteProps {
@@ -13,10 +14,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallback,
   requireSubscription = false 
 }) => {
-  const { user, loading, subscriptionInfo } = useAuth()
+  const { user, loading } = useAuth()
+  const { subscriptionStatus, isLoading: subscriptionLoading } = useSubscription()
 
   // Mostrar loading mientras se verifica la autenticación
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
@@ -47,7 +49,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Si se requiere suscripción y el usuario no la tiene
-  if (requireSubscription && !subscriptionInfo.isActive) {
+  if (requireSubscription && subscriptionStatus && !subscriptionStatus.isActive) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
@@ -59,8 +61,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Suscripción Requerida</h2>
             <p className="text-gray-600 mb-4">
-              {subscriptionInfo.subscriptionStatus === 'trial' 
-                ? `Te quedan ${subscriptionInfo.creditsRemaining || 0} créditos en tu prueba gratuita`
+              {subscriptionStatus.plan === 'free' 
+                ? `Te quedan ${subscriptionStatus.maxUsage - subscriptionStatus.usageCount} generaciones gratuitas`
                 : 'Necesitas una suscripción activa para acceder a esta funcionalidad'
               }
             </p>
