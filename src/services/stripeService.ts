@@ -1,6 +1,13 @@
 import { loadStripe } from '@stripe/stripe-js'
 
 // Configurar con tu clave pública de Stripe
+console.log('=== STRIPE SERVICE INITIALIZATION ===')
+console.log('Environment check:', {
+  NODE_ENV: import.meta.env.NODE_ENV,
+  VITE_STRIPE_PUBLIC_KEY: import.meta.env.VITE_STRIPE_PUBLIC_KEY ? 'SET' : 'MISSING',
+  VITE_STRIPE_PUBLIC_KEY_VALUE: import.meta.env.VITE_STRIPE_PUBLIC_KEY?.substring(0, 10) + '...' || 'UNDEFINED'
+})
+
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY
 console.log('Stripe public key loaded:', stripePublicKey ? 'SET' : 'MISSING')
 console.log('Stripe public key starts with:', stripePublicKey?.substring(0, 7) || 'UNDEFINED')
