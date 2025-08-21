@@ -4,7 +4,7 @@ import { BackendService } from './backendService'
 
 export interface AIProvider {
   name: string
-  generateDesign: (imageData: string, options: DesignOptions) => Promise<string>
+  generateDesign: (imageData: string, options: DesignOptions, userId?: string) => Promise<string>
   isAvailable: () => boolean
 }
 
@@ -33,7 +33,7 @@ class ReplicateProvider implements AIProvider {
     return !!API_KEYS.replicate
   }
 
-  async generateDesign(imageData: string, options: DesignOptions): Promise<string> {
+  async generateDesign(imageData: string, options: DesignOptions, userId?: string): Promise<string> {
     const prompt = this.createPrompt(options)
     
     try {
@@ -264,14 +264,14 @@ class AIService {
       }
 
       try {
-        return await provider.generateDesign(imageData, options)
+        return await provider.generateDesign(imageData, options, userId)
       } catch (error) {
         console.error(`Error with provider ${provider.name}:`, error)
         
         // Intentar con otro proveedor disponible
         const otherProviders = availableProviders.filter(p => p !== provider)
         if (otherProviders.length > 0) {
-          return await otherProviders[0].generateDesign(imageData, options)
+          return await otherProviders[0].generateDesign(imageData, options, userId)
         }
         
         // Último recurso: simulación

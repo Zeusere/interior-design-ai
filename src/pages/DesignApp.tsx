@@ -44,11 +44,6 @@ function DesignApp() {
     setIsProcessing(true)
     setErrorMessage(null)
     
-    // Si es la primera vez que se llama, actualizar las imágenes subidas
-    if (uploadedImages.length === 0) {
-      setUploadedImages(images)
-    }
-    
     try {
       // Procesar cada imagen con su tipo de habitación específico
       for (const image of images) {
@@ -62,7 +57,8 @@ function DesignApp() {
         const imageDesignOptions = { ...designOptions, roomType: image.roomType }
         
         try {
-          const processedImageUrl = await aiService.generateDesign(image.url, imageDesignOptions)
+          // Pasar el userId al servicio de IA
+          const processedImageUrl = await aiService.generateDesign(image.url, imageDesignOptions, user?.id)
           
           const newProcessedImage: ProcessedImage = {
             id: Date.now().toString() + Math.random().toString(),
@@ -113,7 +109,8 @@ function DesignApp() {
       }
 
       const imageDesignOptions = { ...designOptions, roomType: image.roomType }
-      const processedImageUrl = await aiService.generateDesign(image.url, imageDesignOptions)
+      // Pasar el userId al servicio de IA
+      const processedImageUrl = await aiService.generateDesign(image.url, imageDesignOptions, user?.id)
       
       const newProcessedImage: ProcessedImage = {
         id: Date.now().toString() + Math.random().toString(),
