@@ -64,6 +64,30 @@ export default async function handler(req, res) {
     console.log('Existing user:', existingUser)
     let customerId = existingUser?.stripe_customer_id
 
+    // Verificar si el customer ID existe en Stripe
+    if (customerId) {
+      try {
+        console.log('Verifying existing Stripe customer:', customerId)
+        await stripe.customers.retrieve(customerId)
+        console.log('Customer exists in Stripe')
+      } catch (customerError) {
+        console.log('Customer not found in Stripe, will create new one:', customerError.message)
+        customerId = null
+        
+        // Limpiar customer ID inválido de la base de datos
+        if (existingUser) {
+          console.log('Cleaning up invalid customer ID from database...')
+          await supabase
+            .from('user_subscriptions')
+            .update({ 
+              stripe_customer_id: null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', userId)
+        }
+      }
+    }
+
     // Si no existe customer en Stripe, crear uno
     if (!customerId) {
       console.log('Creating new Stripe customer...')
