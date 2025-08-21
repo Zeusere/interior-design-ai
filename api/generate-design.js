@@ -438,6 +438,50 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
         
         console.log('✅ Diseño generado exitosamente');
         
+        // Descargar la imagen resultante de Replicate y subirla a Supabase Storage
+        let processedImageUrl = resultImageUrl;
+        try {
+          console.log('📥 Descargando imagen resultante de Replicate...');
+          const imageResponse = await fetch(resultImageUrl);
+          if (!imageResponse.ok) {
+            throw new Error(`Error descargando imagen: ${imageResponse.statusText}`);
+          }
+          
+          const imageBuffer = await imageResponse.arrayBuffer();
+          console.log('📊 Tamaño de imagen descargada:', imageBuffer.byteLength, 'bytes');
+          
+          // Generar nombre único para la imagen procesada
+          const timestamp = Date.now();
+          const randomId = Math.random().toString(36).substring(2);
+          const processedFileName = `temp-images/processed-${timestamp}-${randomId}.jpg`;
+          
+          console.log('📤 Subiendo imagen procesada a Supabase Storage...');
+          const { data: processedData, error: processedError } = await supabase.storage
+            .from('interior-images')
+            .upload(processedFileName, imageBuffer, {
+              contentType: 'image/jpeg',
+              cacheControl: '3600',
+              upsert: false
+            });
+          
+          if (processedError) {
+            console.error('❌ Error subiendo imagen procesada:', processedError);
+            throw new Error(`Error subiendo imagen procesada: ${processedError.message}`);
+          }
+          
+          // Obtener URL pública de la imagen procesada
+          const { data: processedUrlData } = supabase.storage
+            .from('interior-images')
+            .getPublicUrl(processedFileName);
+          
+          processedImageUrl = processedUrlData.publicUrl;
+          console.log('✅ Imagen procesada subida a Supabase Storage:', processedImageUrl);
+          
+        } catch (uploadError) {
+          console.error('⚠️ Error subiendo imagen procesada (usando URL original):', uploadError);
+          // Continuar con la URL original si falla la subida
+        }
+        
         // Guardar en la base de datos
         try {
           if (userId) {
@@ -446,7 +490,7 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
               .insert([{
                 user_id: userId,
                 original_url: publicImageUrl,      // Imagen original
-                processed_url: resultImageUrl,     // Imagen procesada por IA
+                processed_url: processedImageUrl,  // Imagen procesada (ahora de Supabase)
                 room_type: options.roomType || 'living-room',
                 style_applied: options.style || 'modern',
                 processing_options: options,
@@ -472,7 +516,7 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
         
         return res.json({
           success: true,
-          imageUrl: resultImageUrl,
+          imageUrl: processedImageUrl,  // Ahora devuelve URL de Supabase
           prompt: prompt,
           processingTime: attempts * 5
         });
