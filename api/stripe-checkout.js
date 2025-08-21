@@ -102,24 +102,45 @@ export default async function handler(req, res) {
 
       // Guardar o actualizar en la base de datos
       console.log('Saving customer to Supabase...')
-      const { error: upsertError } = await supabase
-        .from('user_subscriptions')
-        .upsert({
-          user_id: userId,
-          stripe_customer_id: customerId,
-          email: userEmail,
-          plan: 'free',
-          usage_count: 0,
-          max_usage: 5,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+      
+      if (existingUser) {
+        // Usuario existe, actualizar solo el customer ID
+        console.log('Updating existing user with new customer ID...')
+        const { error: updateError } = await supabase
+          .from('user_subscriptions')
+          .update({ 
+            stripe_customer_id: customerId,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId)
 
-      if (upsertError) {
-        console.log('Supabase upsert error:', upsertError)
-        throw upsertError
+        if (updateError) {
+          console.log('Supabase update error:', updateError)
+          throw updateError
+        }
+        console.log('User updated successfully')
+      } else {
+        // Usuario no existe, crear uno nuevo
+        console.log('Creating new user...')
+        const { error: insertError } = await supabase
+          .from('user_subscriptions')
+          .insert({
+            user_id: userId,
+            stripe_customer_id: customerId,
+            email: userEmail,
+            plan: 'free',
+            usage_count: 0,
+            max_usage: 5,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+
+        if (insertError) {
+          console.log('Supabase insert error:', insertError)
+          throw insertError
+        }
+        console.log('New user created successfully')
       }
-      console.log('Customer saved to Supabase successfully')
     }
 
     // Crear sesión de checkout
