@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
-import { useAuth } from './AuthContext'
+import { createContext, useContext, useState, useEffect } from 'react'
 import { stripeService, type SubscriptionStatus } from '../services/stripeService'
+import { useAuth } from './AuthContext'
 
 interface SubscriptionContextType {
   subscriptionStatus: SubscriptionStatus | null
@@ -168,6 +168,29 @@ export const useCanUseFeature = () => {
   }
   
   return stripeService.canUseFeature(subscriptionStatus)
+}
+
+// Hook para verificar si puede generar nuevas imágenes
+export const useCanGenerateImages = () => {
+  const { subscriptionStatus } = useSubscription()
+  
+  if (!subscriptionStatus) {
+    return false
+  }
+  
+  return stripeService.canUseFeature(subscriptionStatus)
+}
+
+// Hook para verificar si puede ver proyectos existentes (siempre true)
+export const useCanViewProjects = () => {
+  // Los usuarios siempre pueden ver sus proyectos existentes
+  return true
+}
+
+// Hook para verificar si puede guardar proyectos (siempre true si está autenticado)
+export const useCanSaveProjects = () => {
+  const { user } = useAuth()
+  return !!user // Solo necesita estar autenticado
 }
 
 export const useIsProUser = () => {
