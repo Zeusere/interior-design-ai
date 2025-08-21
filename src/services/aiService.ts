@@ -33,7 +33,7 @@ class ReplicateProvider implements AIProvider {
     return !!API_KEYS.replicate
   }
 
-  async generateDesign(imageData: string, options: DesignOptions, userId?: string): Promise<string> { // eslint-disable-line @typescript-eslint/no-unused-vars
+  async generateDesign(imageData: string, options: DesignOptions): Promise<string> {
     const prompt = this.createPrompt(options)
     
     try {
