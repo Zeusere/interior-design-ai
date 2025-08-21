@@ -58,7 +58,7 @@ function DesignApp() {
         
         try {
           // Pasar el userId al servicio de IA
-          const processedImageUrl = await aiService.generateDesign(image.url, imageDesignOptions, user?.id)
+          const processedImageUrl = await aiService.generateDesign(image.url, imageDesignOptions, undefined, user?.id)
           
           const newProcessedImage: ProcessedImage = {
             id: Date.now().toString() + Math.random().toString(),
@@ -110,7 +110,7 @@ function DesignApp() {
 
       const imageDesignOptions = { ...designOptions, roomType: image.roomType }
       // Pasar el userId al servicio de IA
-      const processedImageUrl = await aiService.generateDesign(image.url, imageDesignOptions, user?.id)
+      const processedImageUrl = await aiService.generateDesign(image.url, imageDesignOptions, undefined, user?.id)
       
       const newProcessedImage: ProcessedImage = {
         id: Date.now().toString() + Math.random().toString(),

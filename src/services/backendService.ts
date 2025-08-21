@@ -61,7 +61,7 @@ export class BackendService {
       // Preparar headers
       const headers: Record<string, string> = {}
       if (userId) {
-        headers['x-user-id'] = userId
+        headers['x-user-id'] = userId // eslint-disable-line @typescript-eslint/no-unused-vars
       }
       
       // Hacer llamada al backend

@@ -288,6 +288,10 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
   try {
     console.log('🎨 Iniciando generación de diseño...');
     
+    // Leer userId del header
+    const userId = req.headers['x-user-id'];
+    console.log('👤 UserId recibido:', userId);
+    
     if (!req.file) {
       return res.status(400).json({ error: 'No se proporcionó imagen' });
     }
@@ -413,8 +417,6 @@ app.post('/api/generate-design', upload.single('image'), async (req, res) => {
         
         // Guardar en la base de datos
         try {
-          const userId = req.headers['x-user-id']; // Pasaremos esto desde el frontend
-          
           if (userId) {
             const { data: savedImage, error: dbError } = await supabase
               .from('images')
