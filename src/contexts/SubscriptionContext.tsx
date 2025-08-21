@@ -51,8 +51,17 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     try {
       setIsLoading(true)
       setError(null)
-      const status = await stripeService.getSubscriptionStatus(user.id)
-      setSubscriptionStatus(status)
+      // TEMPORALMENTE DESHABILITADO para evitar problemas con RLS
+      // const status = await stripeService.getSubscriptionStatus(user.id)
+      // setSubscriptionStatus(status)
+      
+      // Usar estado por defecto temporalmente
+      setSubscriptionStatus({
+        isActive: false,
+        plan: 'free' as const,
+        usageCount: 0,
+        maxUsage: 5
+      })
     } catch (err) {
       console.error('Error loading subscription status:', err)
       setError(err instanceof Error ? err.message : 'Error desconocido')
