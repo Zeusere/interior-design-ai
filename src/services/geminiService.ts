@@ -16,7 +16,7 @@ interface GeminiResponse {
 
 class GeminiService {
   private apiKey: string | null = null
-  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent'
+  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
 
   constructor() {
     // En Vite, las variables de entorno empiezan con VITE_
@@ -71,12 +71,25 @@ class GeminiService {
       }
 
       // Llamada a la API de Gemini para generar imagen
+      console.log('Enviando request a Gemini:', {
+        url: this.baseUrl,
+        prompt: prompt.substring(0, 100) + '...',
+        personImageSize: request.personImage.size,
+        clothingImageSize: request.clothingImage?.size || 'N/A'
+      })
+      
       const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload)
+      })
+      
+      console.log('Respuesta de Gemini:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
       })
 
       if (!response.ok) {
