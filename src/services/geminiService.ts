@@ -76,8 +76,6 @@ class GeminiService {
       }
 
       // Si hay imagen de ropa, agregarla al payload
-      // TEMPORALMENTE DESHABILITADO para probar
-      /*
       if (clothingImageBase64) {
         payload.contents[0].parts.push({
           inline_data: {
@@ -86,7 +84,6 @@ class GeminiService {
           }
         })
       }
-      */
 
       // Llamada a la API de Gemini para generar imagen
       console.log('=== DEBUG GEMINI REQUEST ===')
