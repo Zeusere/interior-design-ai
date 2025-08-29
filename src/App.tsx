@@ -4,6 +4,7 @@ import { SubscriptionProvider } from './contexts/SubscriptionContext'
 import Header from './components/Header.tsx'
 import LandingPage from './pages/LandingPage.tsx'
 import DesignApp from './pages/DesignApp.tsx'
+import ClotheSwap from './pages/ClotheSwap.tsx'
 import Dashboard from './pages/Dashboard.tsx'
 import ProjectDetail from './pages/ProjectDetail.tsx'
 import PricingPage from './pages/PricingPage.tsx'
@@ -27,6 +28,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DesignApp />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/clotheswap" 
+              element={
+                <ProtectedRoute>
+                  <ClotheSwap />
                 </ProtectedRoute>
               } 
             />

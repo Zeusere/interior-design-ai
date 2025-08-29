@@ -1,4 +1,4 @@
-import { Palette, Sparkles, User, LogOut, Settings, CreditCard, Menu, X, LayoutDashboard, HelpCircle, Zap, Crown, Star } from 'lucide-react'
+import { Palette, Sparkles, User, LogOut, Settings, CreditCard, Menu, X, LayoutDashboard, HelpCircle, Zap, Crown, Star, ChevronDown, Shirt } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
@@ -16,11 +16,13 @@ const Header = () => {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showAppsDropdown, setShowAppsDropdown] = useState(false)
 
   // Cerrar menús al cambiar de ruta
   useEffect(() => {
     setShowMobileMenu(false)
     setShowUserMenu(false)
+    setShowAppsDropdown(false)
   }, [location.pathname])
 
   // Cerrar menú móvil al hacer clic fuera
@@ -32,6 +34,9 @@ const Header = () => {
       }
       if (!target.closest('.user-menu') && !target.closest('.user-menu-button')) {
         setShowUserMenu(false)
+      }
+      if (!target.closest('.apps-dropdown') && !target.closest('.apps-dropdown-button')) {
+        setShowAppsDropdown(false)
       }
     }
 
@@ -94,18 +99,57 @@ const Header = () => {
                 </>
               ) : (
                 <>
-                  {/* App Navigation */}
-                  <Link 
-                    to="/app" 
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium ${
-                      location.pathname === '/app' 
-                        ? 'bg-purple-100 text-purple-700' 
-                        : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
-                    }`}
-                  >
-                    <Zap className="w-4 h-4" />
-                    App
-                  </Link>
+                  {/* Apps Dropdown */}
+                  <div className="relative apps-dropdown">
+                    <button 
+                      onClick={() => setShowAppsDropdown(!showAppsDropdown)}
+                      className={`apps-dropdown-button flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium ${
+                        location.pathname === '/app' || location.pathname === '/clotheswap'
+                          ? 'bg-purple-100 text-purple-700' 
+                          : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                      }`}
+                    >
+                      <Zap className="w-4 h-4" />
+                      Apps
+                      <ChevronDown className={`w-4 h-4 transition-transform ${showAppsDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Apps Dropdown Menu */}
+                    <AnimatePresence>
+                      {showAppsDropdown && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                          className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border py-2 z-50"
+                        >
+                          <Link 
+                            to="/app" 
+                            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 transition-colors"
+                            onClick={() => setShowAppsDropdown(false)}
+                          >
+                            <Palette className="w-4 h-4 text-purple-600" />
+                            <div>
+                              <div className="font-medium">Diseño de Interiores</div>
+                              <div className="text-sm text-gray-500">Transforma espacios con IA</div>
+                            </div>
+                          </Link>
+                          
+                          <Link 
+                            to="/clotheswap" 
+                            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 transition-colors"
+                            onClick={() => setShowAppsDropdown(false)}
+                          >
+                            <Shirt className="w-4 h-4 text-blue-600" />
+                            <div>
+                              <div className="font-medium">ClotheSwap</div>
+                              <div className="text-sm text-gray-500">Prueba ropa virtualmente</div>
+                            </div>
+                          </Link>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                   
                   <Link 
                     to="/dashboard" 
@@ -337,18 +381,44 @@ const Header = () => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Link 
-                    to="/app" 
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      location.pathname === '/app' 
-                        ? 'bg-purple-100 text-purple-700' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    <Zap className="w-5 h-5" />
-                    <span className="font-medium">App</span>
-                  </Link>
+                  {/* Apps Section */}
+                  <div className="space-y-2">
+                    <div className="px-4 py-2">
+                      <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">APPS</h4>
+                    </div>
+                    
+                    <Link 
+                      to="/app" 
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                        location.pathname === '/app' 
+                          ? 'bg-purple-100 text-purple-700' 
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Palette className="w-5 h-5" />
+                      <div>
+                        <span className="font-medium">Diseño de Interiores</span>
+                        <p className="text-sm text-gray-500">Transforma espacios con IA</p>
+                      </div>
+                    </Link>
+                    
+                    <Link 
+                      to="/clotheswap" 
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                        location.pathname === '/clotheswap' 
+                          ? 'bg-purple-100 text-purple-700' 
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Shirt className="w-5 h-5" />
+                      <div>
+                        <span className="font-medium">ClotheSwap</span>
+                        <p className="text-sm text-gray-500">Prueba ropa virtualmente</p>
+                      </div>
+                    </Link>
+                  </div>
                   
                   <Link 
                     to="/dashboard" 
