@@ -76,6 +76,8 @@ class GeminiService {
       }
 
       // Si hay imagen de ropa, agregarla al payload
+      // TEMPORALMENTE DESHABILITADO para probar
+      /*
       if (clothingImageBase64) {
         payload.contents[0].parts.push({
           inline_data: {
@@ -84,6 +86,7 @@ class GeminiService {
           }
         })
       }
+      */
 
       // Llamada a la API de Gemini para generar imagen
       console.log('=== DEBUG GEMINI REQUEST ===')
@@ -211,10 +214,10 @@ class GeminiService {
   }
 
   private generateImagePrompt(clothingUrl?: string): string {
-    let prompt = `Create a picture of this person wearing new clothing. Keep the face, body, and pose exactly the same. Replace only the clothing with stylish, modern fashion.`
+    let prompt = `Create a picture of this person wearing new clothing.`
     
     if (clothingUrl) {
-      prompt += ` Use the style inspiration: ${clothingUrl}`
+      prompt += ` Style: ${clothingUrl}`
     }
     
     return prompt
