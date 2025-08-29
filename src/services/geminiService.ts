@@ -74,8 +74,7 @@ class GeminiService {
           ]
         }],
         generationConfig: {
-          responseMimeType: "image/png",
-          responseGenerationType: "IMAGE"
+          responseMimeType: "image/png"
         }
       }
 
@@ -215,18 +214,19 @@ class GeminiService {
   }
 
   private generateImagePrompt(clothingUrl?: string): string {
-    let prompt = `Create a new image showing this person wearing different clothing. 
+    let prompt = `Generate an image of this person wearing new clothing. 
     
-    IMPORTANT: You must generate and return an IMAGE, not text.
+    CRITICAL: You must output an IMAGE file, not text description.
     
-    Instructions:
+    Task: Take the person in the input image and create a new image where they are wearing different clothing.
+    
+    Requirements:
     - Keep the person's face, body type, and pose exactly the same
     - Replace their current clothing with stylish, modern fashion
     - Maintain the same lighting, background, and composition
     - Make the clothing fit naturally and look realistic
-    - Generate a photorealistic image as output
     
-    Output format: Generate an image file (PNG/JPG) showing the person in new clothing.`
+    Output: A single image file showing the person in new clothing.`
     
     if (clothingUrl) {
       prompt += `\n\nStyle inspiration: ${clothingUrl}`
