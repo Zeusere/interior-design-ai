@@ -72,7 +72,11 @@ class GeminiService {
               }
             }
           ]
-        }]
+        }],
+        generationConfig: {
+          responseMimeType: "image/png",
+          responseGenerationType: "IMAGE"
+        }
       }
 
       // Si hay imagen de ropa, agregarla al payload
@@ -139,6 +143,20 @@ class GeminiService {
         candidatesLength: data.candidates?.length || 0,
         firstCandidateParts: data.candidates?.[0]?.content?.parts?.length || 0
       })
+      
+      // Log detallado de cada parte de la respuesta
+      if (data.candidates?.[0]?.content?.parts) {
+        data.candidates[0].content.parts.forEach((part: any, index: number) => {
+          console.log(`Part ${index}:`, {
+            type: part.text ? 'text' : 'inline_data',
+            hasText: !!part.text,
+            hasInlineData: !!part.inline_data,
+            mimeType: part.inline_data?.mime_type,
+            dataLength: part.inline_data?.data?.length || 0
+          })
+        })
+      }
+      
       console.log('Full response data:', data)
       console.log('========================')
       
@@ -197,14 +215,18 @@ class GeminiService {
   }
 
   private generateImagePrompt(clothingUrl?: string): string {
-    let prompt = `Generate a realistic image of this person wearing new clothing. 
+    let prompt = `Create a new image showing this person wearing different clothing. 
     
-    Requirements:
+    IMPORTANT: You must generate and return an IMAGE, not text.
+    
+    Instructions:
     - Keep the person's face, body type, and pose exactly the same
-    - Replace only the clothing with stylish, modern fashion
+    - Replace their current clothing with stylish, modern fashion
     - Maintain the same lighting, background, and composition
     - Make the clothing fit naturally and look realistic
-    - Output: A single, high-quality image`
+    - Generate a photorealistic image as output
+    
+    Output format: Generate an image file (PNG/JPG) showing the person in new clothing.`
     
     if (clothingUrl) {
       prompt += `\n\nStyle inspiration: ${clothingUrl}`
