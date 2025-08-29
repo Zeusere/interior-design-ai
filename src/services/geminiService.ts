@@ -16,7 +16,7 @@ interface GeminiResponse {
 
 class GeminiService {
   private apiKey: string | null = null
-  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent'
 
   constructor() {
     // En Vite, las variables de entorno empiezan con VITE_
@@ -28,6 +28,21 @@ class GeminiService {
       return {
         success: false,
         error: 'API key de Gemini no configurada. Configura VITE_GEMINI_API_KEY en tu archivo .env'
+      }
+    }
+
+    // Validar que las imágenes no sean demasiado grandes
+    if (request.personImage.size > 5 * 1024 * 1024) { // 5MB
+      return {
+        success: false,
+        error: 'La imagen de la persona es demasiado grande. Máximo 5MB.'
+      }
+    }
+
+    if (request.clothingImage && request.clothingImage.size > 5 * 1024 * 1024) {
+      return {
+        success: false,
+        error: 'La imagen de la ropa es demasiado grande. Máximo 5MB.'
       }
     }
 
@@ -71,33 +86,61 @@ class GeminiService {
       }
 
       // Llamada a la API de Gemini para generar imagen
-      console.log('Enviando request a Gemini:', {
-        url: this.baseUrl,
-        prompt: prompt.substring(0, 100) + '...',
-        personImageSize: request.personImage.size,
-        clothingImageSize: request.clothingImage?.size || 'N/A'
-      })
+      console.log('=== DEBUG GEMINI REQUEST ===')
+      console.log('URL:', this.baseUrl)
+      console.log('API Key (primeros 10 chars):', this.apiKey?.substring(0, 10) + '...')
+      console.log('Prompt:', prompt)
+      console.log('Person Image Size:', request.personImage.size, 'bytes')
+      console.log('Clothing Image Size:', request.clothingImage?.size || 'N/A', 'bytes')
+      console.log('Person Image Type:', request.personImage.type)
+      console.log('Clothing Image Type:', request.clothingImage?.type || 'N/A')
+      console.log('Payload keys:', Object.keys(payload.contents[0].parts))
+      console.log('============================')
       
       const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'User-Agent': 'ClotheSwap-App/1.0',
         },
         body: JSON.stringify(payload)
       })
       
-      console.log('Respuesta de Gemini:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
-      })
+      console.log('=== DEBUG GEMINI RESPONSE ===')
+      console.log('Status:', response.status)
+      console.log('Status Text:', response.statusText)
+      console.log('Headers:', Object.fromEntries(response.headers.entries()))
+      console.log('============================')
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(`Error de Gemini: ${errorData.error?.message || response.statusText}`)
+        let errorMessage = `Error ${response.status}: ${response.statusText}`
+        
+        try {
+          const errorData = await response.json()
+          console.error('Error completo de Gemini:', errorData)
+          
+          if (errorData.error?.message) {
+            errorMessage = `Error de Gemini: ${errorData.error.message}`
+          } else if (errorData.error?.details) {
+            errorMessage = `Error de Gemini: ${JSON.stringify(errorData.error.details)}`
+          }
+        } catch (parseError) {
+          console.error('No se pudo parsear el error:', parseError)
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
+      
+      console.log('=== DEBUG GEMINI DATA ===')
+      console.log('Response structure:', {
+        hasCandidates: !!data.candidates,
+        candidatesLength: data.candidates?.length || 0,
+        firstCandidateParts: data.candidates?.[0]?.content?.parts?.length || 0
+      })
+      console.log('Full response data:', data)
+      console.log('========================')
       
       // Buscar la imagen generada en la respuesta
       const generatedImagePart = data.candidates?.[0]?.content?.parts?.find(
@@ -154,21 +197,17 @@ class GeminiService {
   }
 
   private generateImagePrompt(clothingUrl?: string): string {
-    let prompt = `Generate a realistic image showing how this person would look wearing new clothing. 
+    let prompt = `Generate a realistic image of this person wearing new clothing. 
     
-    Instructions:
-    1. Keep the person's face, body type, and pose exactly the same
-    2. Replace their current clothing with stylish, modern fashion
-    3. Make the clothing fit naturally and look realistic
-    4. Use complementary colors and styles that suit the person
-    5. Maintain the same lighting and background
-    6. Ensure the final image looks like a professional fashion photo
-    
-    Style: Modern, fashionable, realistic, high-quality photography
-    Output: A single, high-resolution image showing the person in new clothing`
+    Requirements:
+    - Keep the person's face, body type, and pose exactly the same
+    - Replace only the clothing with stylish, modern fashion
+    - Maintain the same lighting, background, and composition
+    - Make the clothing fit naturally and look realistic
+    - Output: A single, high-quality image`
     
     if (clothingUrl) {
-      prompt += `\n\nNote: The user also provided a store link: ${clothingUrl}. Use this as inspiration for the clothing style.`
+      prompt += `\n\nStyle inspiration: ${clothingUrl}`
     }
     
     return prompt
