@@ -1,4 +1,6 @@
 // src/services/GeminiService.ts
+// Servicio frontend que llama a /api/gemini (serverless en Vercel) usando fetch.
+// No expone la API key en el cliente.
 
 export interface GeminiRequest {
   personImage: File;
@@ -13,29 +15,29 @@ export interface GeminiResponse {
   error?: string;
 }
 
-const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 class GeminiService {
   private endpoint: string;
 
   constructor() {
-    // Relativo: sirve igual en dev (proxy) y en producción (Vercel)
+    // Funciona tanto en dev como en prod (Vercel)
     this.endpoint = '/api/gemini';
     console.log('🚀 GeminiService inicializado →', this.endpoint);
   }
 
   async generateClotheSwap(req: GeminiRequest): Promise<GeminiResponse> {
-    // Validaciones básicas
-    if (!SUPPORTED_TYPES.includes(req.personImage.type)) {
-      return { success: false, error: 'Formato de imagen de persona no permitido.' };
+    // Validaciones
+    if (!SUPPORTED_TYPES.includes(req.personImage.type as any)) {
+      return { success: false, error: 'Formato de imagen de persona no permitido (jpeg/png/webp).' };
     }
     if (req.personImage.size > MAX_FILE_SIZE) {
       return { success: false, error: 'La imagen de la persona es demasiado grande. Máximo 5MB.' };
     }
     if (req.clothingImage) {
-      if (!SUPPORTED_TYPES.includes(req.clothingImage.type)) {
-        return { success: false, error: 'Formato de imagen de ropa no permitido.' };
+      if (!SUPPORTED_TYPES.includes(req.clothingImage.type as any)) {
+        return { success: false, error: 'Formato de imagen de ropa no permitido (jpeg/png/webp).' };
       }
       if (req.clothingImage.size > MAX_FILE_SIZE) {
         return { success: false, error: 'La imagen de la ropa es demasiado grande. Máximo 5MB.' };
@@ -43,37 +45,40 @@ class GeminiService {
     }
 
     try {
-      // Base64 de entrada (solo la parte después de la coma)
+      // Convierte imágenes a base64 (solo la parte después de la coma)
       const personB64 = await this.fileToBase64(req.personImage);
       const clothingB64 = req.clothingImage ? await this.fileToBase64(req.clothingImage) : null;
 
       const prompt = req.prompt ?? this.buildPrompt(req.clothingUrl);
 
-      // Payload para Gemini (el server añadirá tools + response_mime_type por si acaso)
+      // Payload REST para gemini-2.5-flash-image-preview
+      // (Este modelo NO acepta 'tools', ni 'response_mime_type'.)
       const payload = {
-        contents: [{
-          role: 'user',
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: req.personImage.type, data: personB64 } },
-            ...(clothingB64 ? [{ inline_data: { mime_type: req.clothingImage!.type, data: clothingB64 } }] : []),
-          ],
-        }],
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: req.personImage.type, data: personB64 } },
+              ...(clothingB64
+                ? [{ inline_data: { mime_type: req.clothingImage!.type, data: clothingB64 } }]
+                : []),
+            ],
+          },
+        ],
+        // Puedes ajustar parámetros de sampling si quieres:
         generationConfig: {
-          // Puedes ajustar temperatura si quieres; el server pondrá response_mime_type
           temperature: 0.7,
         },
-        // Opcional: también puedes enviarlo ya aquí; el server lo sobreescribe si faltara
-        tools: [{ image_generation: {} }],
       };
 
-      // === DEBUG ===
+      // ==== DEBUG ====
       console.log('=== GEMINI REQUEST ===');
       console.log('Endpoint:', this.endpoint);
       console.log('Prompt:', prompt);
-      console.log('Person Type/Size:', req.personImage.type, req.personImage.size);
-      console.log('Clothing Type/Size:', req.clothingImage?.type || 'N/A', req.clothingImage?.size || 'N/A');
-      console.log('======================');
+      console.log('Person:', req.personImage.type, req.personImage.size);
+      console.log('Clothing:', req.clothingImage?.type || 'N/A', req.clothingImage?.size || 'N/A');
+      console.log('=====================');
 
       const response = await fetch(this.endpoint, {
         method: 'POST',
@@ -90,7 +95,7 @@ class GeminiService {
 
       const data = await response.json();
 
-      // === Parse de respuesta ===
+      // === Parse respuesta ===
       const cand = data?.candidates?.[0];
       const parts = cand?.content?.parts ?? [];
 
@@ -107,21 +112,27 @@ class GeminiService {
         );
       }
 
-      // Buscar la imagen
-      const imgPart = parts.find(
-        (p: any) => p?.inline_data?.mime_type?.startsWith('image/') && p?.inline_data?.data
-      );
+      // La imagen puede venir como inline_data (snake_case) o inlineData (camelCase)
+      const imgPart = parts.find((p: any) => {
+        const id = p.inline_data ?? p.inlineData;
+        const mt = id?.mime_type ?? id?.mimeType;
+        return id?.data && typeof mt === 'string' && mt.startsWith('image/');
+      });
 
       if (!imgPart) {
-        // Si no hay imagen, mira si vino texto para log
         const txt = parts.find((p: any) => p?.text)?.text;
         if (txt) console.log('Texto devuelto por Gemini:', txt);
         throw new Error('No se pudo generar la imagen. Gemini devolvió solo texto.');
       }
 
-      const b64 = imgPart.inline_data.data as string;
-      const mime = imgPart.inline_data.mime_type || 'image/png';
-      const imageUrl = `data:${mime};base64,${b64}`;
+      const id = (imgPart.inline_data ?? imgPart.inlineData) as {
+        data: string;
+        mime_type?: string;
+        mimeType?: string;
+      };
+
+      const mime = id.mime_type || id.mimeType || 'image/png';
+      const imageUrl = `data:${mime};base64,${id.data}`;
 
       return { success: true, imageUrl };
     } catch (err: any) {
@@ -137,7 +148,9 @@ class GeminiService {
       'Return a single photorealistic image.',
       clothingUrl ? `Use this clothing reference/style: ${clothingUrl}` : '',
       'The subject is an adult. Do not create explicit or unsafe content.',
-    ].filter(Boolean).join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
   }
 
   private async fileToBase64(file: File): Promise<string> {
@@ -156,9 +169,9 @@ class GeminiService {
     });
   }
 
-  // Helpers opcionales que puedes usar en tu UI
+  // Helpers opcionales para tu UI
   async validateImage(image: File): Promise<boolean> {
-    if (!SUPPORTED_TYPES.includes(image.type)) return false;
+    if (!SUPPORTED_TYPES.includes(image.type as any)) return false;
     if (image.size > MAX_FILE_SIZE) return false;
     return true;
   }
