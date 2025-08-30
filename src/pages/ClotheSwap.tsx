@@ -2,10 +2,8 @@ import { useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useDropzone } from 'react-dropzone'
 import { Upload, User, Shirt, Sparkles, Download, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react'
-// Usar el servicio serverless por defecto para mayor seguridad
-// Para desarrollo local, puedes cambiar a geminiService
-import geminiService from '../services/geminiServiceServerless'
-// import geminiService from '../services/geminiService' // Para desarrollo local
+// Usar el servicio de Vercel optimizado
+import geminiService from '../services/geminiServiceVercel'
 
 interface UploadedImage {
   file: File
