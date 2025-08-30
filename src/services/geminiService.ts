@@ -74,7 +74,6 @@ class GeminiServiceVercel {
           ]
         }],
         generationConfig: {
-          response_mime_type: VERCEL_CONFIG.RESPONSE_MIME_TYPE,
           temperature: VERCEL_CONFIG.TEMPERATURE,
         }
       }
@@ -89,7 +88,7 @@ class GeminiServiceVercel {
       console.log('Clothing Image Type:', request.clothingImage?.type || 'N/A')
       console.log('Payload structure:', {
         hasGenerationConfig: !!payload.generationConfig,
-        responseMimeType: payload.generationConfig.response_mime_type
+        temperature: payload.generationConfig.temperature
       })
       console.log('============================')
       
