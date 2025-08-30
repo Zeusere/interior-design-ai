@@ -1,6 +1,7 @@
-// Servicio para la API de Gemini
-// Implementación real usando gemini-2.5-flash-image-preview para generación de imágenes
-import { GEMINI_CONFIG, getGeminiPrompt } from '../config/gemini'
+// Servicio principal para Gemini
+// Funciona tanto en desarrollo local como en Vercel
+
+import { VERCEL_CONFIG, getVercelGeminiPrompt, isVercel, getVercelApiUrl } from '../config/vercel'
 
 interface GeminiRequest {
   personImage: File
@@ -15,32 +16,33 @@ interface GeminiResponse {
   error?: string
 }
 
-class GeminiService {
-  private apiKey: string | null = null
-  private baseUrl = GEMINI_CONFIG.ENDPOINTS.direct
+class GeminiServiceVercel {
+  private apiEndpoint: string
 
   constructor() {
-    // En Vite, las variables de entorno empiezan con VITE_
-    this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || null
+    // Determinar el endpoint según el entorno
+    if (isVercel()) {
+      this.apiEndpoint = VERCEL_CONFIG.GEMINI_ENDPOINT; // '/api/gemini'
+    } else {
+      this.apiEndpoint = `${getVercelApiUrl()}/api/gemini`; // 'http://localhost:3001/api/gemini'
+    }
+    
+    console.log('🚀 GeminiServiceVercel inicializado');
+    console.log('🔗 Endpoint configurado:', this.apiEndpoint);
+    console.log('🌍 ¿Estamos en Vercel?:', isVercel());
+    console.log('🌐 Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'N/A');
   }
 
   async generateClotheSwap(request: GeminiRequest): Promise<GeminiResponse> {
-    if (!this.apiKey) {
-      return {
-        success: false,
-        error: 'API key de Gemini no configurada. Configura VITE_GEMINI_API_KEY en tu archivo .env'
-      }
-    }
-
     // Validar que las imágenes no sean demasiado grandes
-    if (request.personImage.size > 5 * 1024 * 1024) { // 5MB
+    if (request.personImage.size > VERCEL_CONFIG.MAX_FILE_SIZE) {
       return {
         success: false,
         error: 'La imagen de la persona es demasiado grande. Máximo 5MB.'
       }
     }
 
-    if (request.clothingImage && request.clothingImage.size > 5 * 1024 * 1024) {
+    if (request.clothingImage && request.clothingImage.size > VERCEL_CONFIG.MAX_FILE_SIZE) {
       return {
         success: false,
         error: 'La imagen de la ropa es demasiado grande. Máximo 5MB.'
@@ -57,7 +59,7 @@ class GeminiService {
       }
 
       // Preparar el prompt para generación de imagen
-      const prompt = request.prompt || this.generateImagePrompt(request.clothingUrl)
+      const prompt = request.prompt || getVercelGeminiPrompt(request.clothingUrl ? 'withClothing' : 'default', request.clothingUrl)
 
       // Construir el payload para Gemini con imagen de entrada
       const payload = {
@@ -71,44 +73,35 @@ class GeminiService {
             }] : [])
           ]
         }],
-        tools: [{ image_generation: {} }],
         generationConfig: {
-          response_mime_type: 'image/png',
-          // opcional:
-          // temperature: 0.7,
+          response_mime_type: VERCEL_CONFIG.RESPONSE_MIME_TYPE,
+          temperature: VERCEL_CONFIG.TEMPERATURE,
         }
       }
 
-      // Llamada a la API de Gemini para generar imagen
-      console.log('=== DEBUG GEMINI REQUEST ===')
-      console.log('URL:', this.baseUrl)
-      console.log('API Key (primeros 10 chars):', this.apiKey?.substring(0, 10) + '...')
+      // Llamada al endpoint
+      console.log('=== DEBUG GEMINI VERCEL REQUEST ===')
+      console.log('Endpoint:', this.apiEndpoint)
       console.log('Prompt:', prompt)
       console.log('Person Image Size:', request.personImage.size, 'bytes')
       console.log('Clothing Image Size:', request.clothingImage?.size || 'N/A', 'bytes')
       console.log('Person Image Type:', request.personImage.type)
       console.log('Clothing Image Type:', request.clothingImage?.type || 'N/A')
       console.log('Payload structure:', {
-        hasTools: !!payload.tools,
         hasGenerationConfig: !!payload.generationConfig,
         responseMimeType: payload.generationConfig.response_mime_type
       })
       console.log('============================')
       
-      // Usar reintentos exponenciales solo para errores 500/503
-      const response = await this.postWithRetry(this.baseUrl, {
+      const response = await fetch(this.apiEndpoint, {
         method: 'POST',
-        headers: {
-          'x-goog-api-key': this.apiKey!,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
       
-      console.log('=== DEBUG GEMINI RESPONSE ===')
+      console.log('=== DEBUG GEMINI VERCEL RESPONSE ===')
       console.log('Status:', response.status)
       console.log('Status Text:', response.statusText)
-      console.log('Headers:', Object.fromEntries(response.headers.entries()))
       console.log('============================')
 
       if (!response.ok) {
@@ -122,6 +115,8 @@ class GeminiService {
             errorMessage = `Error de Gemini: ${errorData.error.message}`
           } else if (errorData.error?.details) {
             errorMessage = `Error de Gemini: ${JSON.stringify(errorData.error.details)}`
+          } else if (errorData.error) {
+            errorMessage = `Error de Gemini: ${errorData.error}`
           }
         } catch (parseError) {
           console.error('No se pudo parsear el error:', parseError)
@@ -132,7 +127,7 @@ class GeminiService {
 
       const data = await response.json()
       
-      console.log('=== DEBUG GEMINI DATA ===')
+      console.log('=== DEBUG GEMINI VERCEL DATA ===')
       console.log('Response structure:', {
         hasCandidates: !!data.candidates,
         candidatesLength: data.candidates?.length || 0,
@@ -199,37 +194,12 @@ class GeminiService {
       }
 
     } catch (error) {
-      console.error('Error en Gemini API:', error)
+      console.error('Error en Gemini API Vercel:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido al comunicarse con Gemini'
       }
     }
-  }
-
-  // Función de reintento exponencial solo para errores 500/503
-  private async postWithRetry(url: string, init: RequestInit, tries = 3): Promise<Response> {
-    let err: Response | undefined;
-    
-    for (let i = 0; i < tries; i++) {
-      const r = await fetch(url, init);
-      if (r.ok) return r;
-      
-      if (![500, 503].includes(r.status)) {
-        const t = await r.text().catch(() => '');
-        throw new Error(`HTTP ${r.status} ${r.statusText} ${t}`);
-      }
-      
-      if (i < tries - 1) { // No esperar en el último intento
-        const delay = 1000 * Math.pow(2, i); // 1s, 2s, 4s...
-        console.log(`Reintentando en ${delay}ms... (intento ${i + 1}/${tries})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-      
-      err = r;
-    }
-    
-    throw new Error(`Error persistente ${err?.status} ${err?.statusText}`);
   }
 
   private async fileToBase64(file: File): Promise<string> {
@@ -249,20 +219,13 @@ class GeminiService {
     })
   }
 
-  private generateImagePrompt(clothingUrl?: string): string {
-    return getGeminiPrompt(clothingUrl ? 'withClothing' : 'default', clothingUrl);
-  }
-
   async validateImage(image: File): Promise<boolean> {
     // Validar que la imagen sea válida
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp']
-    const maxSize = 10 * 1024 * 1024 // 10MB
-    
-    if (!validTypes.includes(image.type)) {
+    if (!VERCEL_CONFIG.SUPPORTED_TYPES.includes(image.type as any)) {
       return false
     }
     
-    if (image.size > maxSize) {
+    if (image.size > VERCEL_CONFIG.MAX_FILE_SIZE) {
       return false
     }
     
@@ -276,5 +239,5 @@ class GeminiService {
   }
 }
 
-export default new GeminiService()
+export default new GeminiServiceVercel()
 export type { GeminiRequest, GeminiResponse }

@@ -2,8 +2,8 @@ import { useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useDropzone } from 'react-dropzone'
 import { Upload, User, Shirt, Sparkles, Download, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react'
-// Usar el servicio de Vercel optimizado
-import geminiService from '../services/geminiServiceVercel'
+// Servicio principal de Gemini
+import geminiService from '../services/geminiService'
 
 interface UploadedImage {
   file: File

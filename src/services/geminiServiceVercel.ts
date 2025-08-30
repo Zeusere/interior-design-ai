@@ -1,5 +1,5 @@
-// Servicio simplificado para Gemini en Vercel
-// Evita problemas con import.meta.env y configuración compleja
+// Servicio principal para Gemini
+// Funciona tanto en desarrollo local como en Vercel
 
 import { VERCEL_CONFIG, getVercelGeminiPrompt, isVercel, getVercelApiUrl } from '../config/vercel'
 
@@ -73,7 +73,6 @@ class GeminiServiceVercel {
             }] : [])
           ]
         }],
-        tools: [{ image_generation: {} }],
         generationConfig: {
           response_mime_type: VERCEL_CONFIG.RESPONSE_MIME_TYPE,
           temperature: VERCEL_CONFIG.TEMPERATURE,
@@ -89,7 +88,6 @@ class GeminiServiceVercel {
       console.log('Person Image Type:', request.personImage.type)
       console.log('Clothing Image Type:', request.clothingImage?.type || 'N/A')
       console.log('Payload structure:', {
-        hasTools: !!payload.tools,
         hasGenerationConfig: !!payload.generationConfig,
         responseMimeType: payload.generationConfig.response_mime_type
       })
