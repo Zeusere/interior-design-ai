@@ -1,6 +1,7 @@
-// Servicio para la API de Gemini usando endpoint serverless
-// Esta versión es más segura para producción ya que no expone la API key
-import { GEMINI_CONFIG, getGeminiPrompt } from '../config/gemini'
+// Servicio simplificado para Gemini en Vercel
+// Evita problemas con import.meta.env y configuración compleja
+
+import { VERCEL_CONFIG, getVercelGeminiPrompt, isVercel, getVercelApiUrl } from '../config/vercel'
 
 interface GeminiRequest {
   personImage: File
@@ -15,29 +16,33 @@ interface GeminiResponse {
   error?: string
 }
 
-class GeminiServiceServerless {
-  private apiEndpoint = GEMINI_CONFIG.ENDPOINTS.serverless
+class GeminiServiceVercel {
+  private apiEndpoint: string
 
   constructor() {
-    console.log('🚀 GeminiServiceServerless inicializado');
+    // Determinar el endpoint según el entorno
+    if (isVercel()) {
+      this.apiEndpoint = VERCEL_CONFIG.GEMINI_ENDPOINT; // '/api/gemini'
+    } else {
+      this.apiEndpoint = `${getVercelApiUrl()}/api/gemini`; // 'http://localhost:3001/api/gemini'
+    }
+    
+    console.log('🚀 GeminiServiceVercel inicializado');
     console.log('🔗 Endpoint configurado:', this.apiEndpoint);
-    console.log('🌍 Configuración de entorno:', {
-      isDevelopment: import.meta.env.DEV,
-      isProduction: import.meta.env.PROD,
-      mode: import.meta.env.MODE
-    });
+    console.log('🌍 ¿Estamos en Vercel?:', isVercel());
+    console.log('🌐 Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'N/A');
   }
 
   async generateClotheSwap(request: GeminiRequest): Promise<GeminiResponse> {
     // Validar que las imágenes no sean demasiado grandes
-    if (request.personImage.size > 5 * 1024 * 1024) { // 5MB
+    if (request.personImage.size > VERCEL_CONFIG.MAX_FILE_SIZE) {
       return {
         success: false,
         error: 'La imagen de la persona es demasiado grande. Máximo 5MB.'
       }
     }
 
-    if (request.clothingImage && request.clothingImage.size > 5 * 1024 * 1024) {
+    if (request.clothingImage && request.clothingImage.size > VERCEL_CONFIG.MAX_FILE_SIZE) {
       return {
         success: false,
         error: 'La imagen de la ropa es demasiado grande. Máximo 5MB.'
@@ -54,7 +59,7 @@ class GeminiServiceServerless {
       }
 
       // Preparar el prompt para generación de imagen
-      const prompt = request.prompt || this.generateImagePrompt(request.clothingUrl)
+      const prompt = request.prompt || getVercelGeminiPrompt(request.clothingUrl ? 'withClothing' : 'default', request.clothingUrl)
 
       // Construir el payload para Gemini con imagen de entrada
       const payload = {
@@ -70,14 +75,13 @@ class GeminiServiceServerless {
         }],
         tools: [{ image_generation: {} }],
         generationConfig: {
-          response_mime_type: 'image/png',
-          // opcional:
-          // temperature: 0.7,
+          response_mime_type: VERCEL_CONFIG.RESPONSE_MIME_TYPE,
+          temperature: VERCEL_CONFIG.TEMPERATURE,
         }
       }
 
-      // Llamada al endpoint serverless local
-      console.log('=== DEBUG GEMINI SERVERLESS REQUEST ===')
+      // Llamada al endpoint
+      console.log('=== DEBUG GEMINI VERCEL REQUEST ===')
       console.log('Endpoint:', this.apiEndpoint)
       console.log('Prompt:', prompt)
       console.log('Person Image Size:', request.personImage.size, 'bytes')
@@ -97,7 +101,7 @@ class GeminiServiceServerless {
         body: JSON.stringify(payload)
       })
       
-      console.log('=== DEBUG GEMINI SERVERLESS RESPONSE ===')
+      console.log('=== DEBUG GEMINI VERCEL RESPONSE ===')
       console.log('Status:', response.status)
       console.log('Status Text:', response.statusText)
       console.log('============================')
@@ -125,7 +129,7 @@ class GeminiServiceServerless {
 
       const data = await response.json()
       
-      console.log('=== DEBUG GEMINI SERVERLESS DATA ===')
+      console.log('=== DEBUG GEMINI VERCEL DATA ===')
       console.log('Response structure:', {
         hasCandidates: !!data.candidates,
         candidatesLength: data.candidates?.length || 0,
@@ -192,7 +196,7 @@ class GeminiServiceServerless {
       }
 
     } catch (error) {
-      console.error('Error en Gemini API Serverless:', error)
+      console.error('Error en Gemini API Vercel:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido al comunicarse con Gemini'
@@ -217,20 +221,13 @@ class GeminiServiceServerless {
     })
   }
 
-  private generateImagePrompt(clothingUrl?: string): string {
-    return getGeminiPrompt(clothingUrl ? 'withClothing' : 'default', clothingUrl);
-  }
-
   async validateImage(image: File): Promise<boolean> {
     // Validar que la imagen sea válida
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp']
-    const maxSize = 10 * 1024 * 1024 // 10MB
-    
-    if (!validTypes.includes(image.type)) {
+    if (!VERCEL_CONFIG.SUPPORTED_TYPES.includes(image.type as any)) {
       return false
     }
     
-    if (image.size > maxSize) {
+    if (image.size > VERCEL_CONFIG.MAX_FILE_SIZE) {
       return false
     }
     
@@ -244,5 +241,5 @@ class GeminiServiceServerless {
   }
 }
 
-export default new GeminiServiceServerless()
+export default new GeminiServiceVercel()
 export type { GeminiRequest, GeminiResponse }
