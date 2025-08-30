@@ -1,5 +1,5 @@
-// Servicio para la API de Gemini
-// Implementación real usando gemini-2.5-flash-image-preview para generación de imágenes
+// Servicio para la API de Gemini usando endpoint serverless
+// Esta versión es más segura para producción ya que no expone la API key
 import { GEMINI_CONFIG, getGeminiPrompt } from '../config/gemini'
 
 interface GeminiRequest {
@@ -15,23 +15,10 @@ interface GeminiResponse {
   error?: string
 }
 
-class GeminiService {
-  private apiKey: string | null = null
-  private baseUrl = GEMINI_CONFIG.ENDPOINTS.direct
-
-  constructor() {
-    // En Vite, las variables de entorno empiezan con VITE_
-    this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || null
-  }
+class GeminiServiceServerless {
+  private apiEndpoint = GEMINI_CONFIG.ENDPOINTS.serverless
 
   async generateClotheSwap(request: GeminiRequest): Promise<GeminiResponse> {
-    if (!this.apiKey) {
-      return {
-        success: false,
-        error: 'API key de Gemini no configurada. Configura VITE_GEMINI_API_KEY en tu archivo .env'
-      }
-    }
-
     // Validar que las imágenes no sean demasiado grandes
     if (request.personImage.size > 5 * 1024 * 1024) { // 5MB
       return {
@@ -79,10 +66,9 @@ class GeminiService {
         }
       }
 
-      // Llamada a la API de Gemini para generar imagen
-      console.log('=== DEBUG GEMINI REQUEST ===')
-      console.log('URL:', this.baseUrl)
-      console.log('API Key (primeros 10 chars):', this.apiKey?.substring(0, 10) + '...')
+      // Llamada al endpoint serverless local
+      console.log('=== DEBUG GEMINI SERVERLESS REQUEST ===')
+      console.log('Endpoint:', this.apiEndpoint)
       console.log('Prompt:', prompt)
       console.log('Person Image Size:', request.personImage.size, 'bytes')
       console.log('Clothing Image Size:', request.clothingImage?.size || 'N/A', 'bytes')
@@ -95,20 +81,15 @@ class GeminiService {
       })
       console.log('============================')
       
-      // Usar reintentos exponenciales solo para errores 500/503
-      const response = await this.postWithRetry(this.baseUrl, {
+      const response = await fetch(this.apiEndpoint, {
         method: 'POST',
-        headers: {
-          'x-goog-api-key': this.apiKey!,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
       
-      console.log('=== DEBUG GEMINI RESPONSE ===')
+      console.log('=== DEBUG GEMINI SERVERLESS RESPONSE ===')
       console.log('Status:', response.status)
       console.log('Status Text:', response.statusText)
-      console.log('Headers:', Object.fromEntries(response.headers.entries()))
       console.log('============================')
 
       if (!response.ok) {
@@ -122,6 +103,8 @@ class GeminiService {
             errorMessage = `Error de Gemini: ${errorData.error.message}`
           } else if (errorData.error?.details) {
             errorMessage = `Error de Gemini: ${JSON.stringify(errorData.error.details)}`
+          } else if (errorData.error) {
+            errorMessage = `Error de Gemini: ${errorData.error}`
           }
         } catch (parseError) {
           console.error('No se pudo parsear el error:', parseError)
@@ -132,7 +115,7 @@ class GeminiService {
 
       const data = await response.json()
       
-      console.log('=== DEBUG GEMINI DATA ===')
+      console.log('=== DEBUG GEMINI SERVERLESS DATA ===')
       console.log('Response structure:', {
         hasCandidates: !!data.candidates,
         candidatesLength: data.candidates?.length || 0,
@@ -199,37 +182,12 @@ class GeminiService {
       }
 
     } catch (error) {
-      console.error('Error en Gemini API:', error)
+      console.error('Error en Gemini API Serverless:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido al comunicarse con Gemini'
       }
     }
-  }
-
-  // Función de reintento exponencial solo para errores 500/503
-  private async postWithRetry(url: string, init: RequestInit, tries = 3): Promise<Response> {
-    let err: Response | undefined;
-    
-    for (let i = 0; i < tries; i++) {
-      const r = await fetch(url, init);
-      if (r.ok) return r;
-      
-      if (![500, 503].includes(r.status)) {
-        const t = await r.text().catch(() => '');
-        throw new Error(`HTTP ${r.status} ${r.statusText} ${t}`);
-      }
-      
-      if (i < tries - 1) { // No esperar en el último intento
-        const delay = 1000 * Math.pow(2, i); // 1s, 2s, 4s...
-        console.log(`Reintentando en ${delay}ms... (intento ${i + 1}/${tries})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-      
-      err = r;
-    }
-    
-    throw new Error(`Error persistente ${err?.status} ${err?.statusText}`);
   }
 
   private async fileToBase64(file: File): Promise<string> {
@@ -276,5 +234,5 @@ class GeminiService {
   }
 }
 
-export default new GeminiService()
+export default new GeminiServiceServerless()
 export type { GeminiRequest, GeminiResponse }

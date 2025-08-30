@@ -655,16 +655,57 @@ app.post('/api/enhance-image', upload.single('image'), async (req, res) => {
   }
 });
 
+// Endpoint de Gemini AI
+app.post('/api/gemini', async (req, res) => {
+  try {
+    const API_KEY = process.env.GEMINI_API_KEY;
+    if (!API_KEY) {
+      return res.status(500).json({ error: 'Falta GEMINI_API_KEY en variables de entorno' });
+    }
+
+    const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent';
+    
+    console.log('🤖 Gemini API request recibida');
+    console.log('📊 Payload size:', JSON.stringify(req.body).length, 'bytes');
+    
+    // Reenviar la petición a Gemini con la API key del servidor
+    const response = await fetch(`${baseUrl}?key=${API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(req.body), // Reenviar el payload tal cual
+    });
+
+    const data = await response.json();
+    
+    console.log('🤖 Gemini API response status:', response.status);
+    console.log('📊 Response data size:', JSON.stringify(data).length, 'bytes');
+    
+    // Devolver la respuesta con el mismo status
+    return res.status(response.status).json(data);
+    
+  } catch (error) {
+    console.error('💥 Error en endpoint Gemini:', error);
+    return res.status(500).json({ 
+      error: 'Error interno del servidor',
+      details: error.message 
+    });
+  }
+});
+
 // Endpoint de health check
 app.get('/api/health', (req, res) => {
   const hasReplicateKey = !!API_CONFIG.replicate.apiKey;
   const hasOpenAIKey = !!API_CONFIG.openai.apiKey;
+  const hasGeminiKey = !!process.env.GEMINI_API_KEY;
   
   res.json({
     status: 'ok',
     apis: {
       replicate: hasReplicateKey,
-      openai: hasOpenAIKey
+      openai: hasOpenAIKey,
+      gemini: hasGeminiKey
     },
     timestamp: new Date().toISOString()
   });
